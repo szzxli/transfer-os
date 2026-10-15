@@ -60,7 +60,7 @@
 
 ## 四、四阶段路线图
 
-- **P0 数据地基**：爬 3–5 所 CCC 试点（别一上来 116 所）；编码 6 所 UC 的 TAG 规则（Davis/Irvine/Merced/Riverside/San Diego/Santa Cruz）+ **Cal-GETC 规则（Fall 2025+ 取代 IGETC）**；规则库版本化；记录每份 articulation 协议的更新鲜度
+- **P0 数据地基**：爬 3–5 所 CCC 试点（别一上来 116 所）；编码 6 所 UC 的 TAG 规则（Davis/Irvine/Merced/Riverside/Santa Barbara/Santa Cruz）+ **Cal-GETC 规则（Fall 2025+ 取代 IGETC）**；规则库版本化；记录每份 articulation 协议的更新鲜度
 - **P1 MVP Web**：Articulation 对比器 + 课程计划校验器 + TAG Guard（Vue 3 + Vite，成绩手动录入）
 - **P2 规划与选课**：Roadmap 生成器 + Cal-GETC/GE 路径引擎 + 开源跨校选课器（含 UC 在读生）
 - **P3 咨询与社区**：RAG 问答 Advisor、免费座位提醒、PWA/移动端；**开源飞轮：规则库接受社区 PR**——每年 TAG 规则变更靠社区维护，这是开源版真正的护城河

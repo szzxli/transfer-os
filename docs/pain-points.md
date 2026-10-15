@@ -28,7 +28,7 @@ ASSIST + TAP + TAG + UC 申请 + TAU + FAFSA + 9 所 UC + 23 所 CSU，各管各
 → **工具映射：GE 路径规则引擎**——按目标校+专业推荐 Cal-GETC / 校园 GE / 跳过 GE（如工程），并解释原因。
 
 ### 5. TAG 规则复杂
-6 所 UC 有 TAG（Davis/Irvine/Merced/Riverside/San Diego/Santa Cruz），UCLA/UCB/UCSD 没有；conditional，完不成作废。
+6 所 UC 有 TAG（Davis/Irvine/Merced/Riverside/Santa Barbara/Santa Cruz），UCLA/UCB/UCSD 没有；conditional，完不成作废。
 → **工具映射：TAG 资格检查器 + 追踪 + deadline 提醒**（即 TAG Guard）。
 
 ### 6. ASSIST 数据过期

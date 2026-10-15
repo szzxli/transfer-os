@@ -1,0 +1,53 @@
+school: UC Riverside
+program: TAG
+academic_year: 2026-27
+admission_cycle: Fall 2027
+source: https://admissions.ucr.edu/transfer/transfer-admission-guarantee
+verified_date: 2026-10-15
+requirements:
+  min_gpa_by_major:
+    bourns_college_of_engineering:
+      computer_science: 3.6
+      computer_engineering: 3.3
+      mechanical_engineering: 3.1
+      all_other_bcoe_majors: 3.0
+    college_of_humanities_arts_and_social_sciences:
+      psychology: 3.3
+      theatre_film_and_digital_production: 3.3
+      all_other_chass_majors: 2.8
+    college_of_natural_and_agricultural_sciences:
+      all_majors: 2.8
+      data_science: 3.0
+    school_of_business: 2.8
+    school_of_education: 2.7
+    school_of_public_policy: 2.7
+    note: minimum TAG GPA for the intended major, met by end of summer 2026 and maintained thereafter; selective majors also require major preparation.
+  min_units_at_tag_submission: 30 UC-transferable semester (45 quarter) units completed prior to TAG submission
+  min_units_at_transfer: 60 semester (90 quarter) UC-transferable units by end of spring 2027, with no more than 19 units needed in spring term to reach the minimum
+  english:
+    - first UC-E requirement completed by end of fall 2026
+    - second UC-E completed by end of spring 2027
+  math:
+    - at least one UC-M course completed by end of fall 2026
+  major_preparation: required for all selective majors, with no grade lower than C by end of spring; see UCR Majors Preparation Guide and ASSIST.org
+  breadth:
+    - CHASS and School of Education: complete Cal-GETC or the UCR breadth pattern
+    - School of Business: Cal-GETC/IGETC highly recommended
+  excluded_majors:
+    - Art Studio
+  not_eligible:
+    - students who have baccalaureate degrees
+    - students attending high school in fall 2026, even if simultaneously enrolled at a CCC
+    - former UC students who left UC not in good academic standing
+    - former UC Riverside students, except those enrolled only in summer sessions
+  enrollment_rules:
+    - completed at least one regular academic term at a community college after high school graduation and prior to TAG submission
+    - definition of a CCC student applies (enrolled at one or more CCCs for at least two regular terms, excluding summer)
+  tag_window: September 1-30
+  uc_application_window: October 1-November 30
+  tag_major_must_match_uc_app_major: true
+  one_tag_campus_only: true
+  winter_tag: UCR will NOT accept TAG applications for Winter 2027
+  notes:
+    - Ensure the UC application major matches the TAG application major for UCR.
+    - Meet all remaining TAG and major preparation requirements by end of spring prior to transfer.

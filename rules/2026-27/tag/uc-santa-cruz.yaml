@@ -1,0 +1,36 @@
+school: UC Santa Cruz
+program: TAG
+academic_year: 2026-27
+admission_cycle: Fall 2027
+source: https://admissions.ucsc.edu/transfer-admission-guarantee-tag
+verified_date: 2026-10-15
+requirements:
+  min_gpa:
+    all_majors: 3.0
+    note: overall UC-transferable GPA of 3.0 at the time the TAG is submitted (minimum 30 semester units completed) and by end of summer.
+  min_units_at_tag_submission: 30 UC-transferable semester (45 quarter) units completed at the time the TAG is submitted
+  min_units_at_transfer: 60 UC-transferable semester (90 quarter) units by end of spring, with a minimum of 30 semester (45 quarter) units from one or more CCCs
+  english:
+    - first course in English composition completed by end of fall term prior to transfer
+    - second English composition course completed by end of spring term
+  math:
+    - mathematics course requirement completed by end of fall term prior to transfer
+  seven_course_pattern: all other courses from the seven-course pattern completed by end of spring term prior to fall transfer
+  major_preparation: all required major preparation courses completed with the required minimum grades; screening majors have published TAG major preparation criteria
+  max_spring_units: no more than 19 UC-transferable units (semester or quarter) in spring of the enrollment year (or last regular term) to reach junior standing
+  grade_floor:
+    - be in good academic standing (not on probation or dismissal) for ALL colleges attended
+    - earn no grades lower than C (2.0) in UC-transferable coursework for the fall, winter, and/or spring terms after TAG submission and prior to transfer
+  excluded_majors: unknown
+  not_eligible:
+    - students in or approaching senior standing: more than 80 semester (120 quarter) units of combined lower- and upper-division coursework after UC transfer credit limitations (CCC-only students are not affected)
+    - former UC students not in good standing at the UC campus attended (less than 2.0 GPA at UC)
+    - former UCSC students, who must apply for readmission
+  enrollment_rules:
+    - the last school attended prior to transfer must be a California community college
+  tag_window: September 1-30
+  uc_application_deadline: November 30
+  tag_major_must_match_uc_app_major: unknown
+  notes:
+    - Conflicting sources on Computer Science TAG eligibility: Fall 2026 materials list CS B.A./B.S. as excluded; a recently crawled transfer-center page states all majors are now open for TAG including CS. Treat as unverified for 2026-27; confirm on the official TAG page before encoding.
+    - Choice of major is not guaranteed through TAG unless the major is listed under the TAG Major Preparation Selection Criteria.

@@ -1,0 +1,42 @@
+school: UC Davis
+program: TAG
+academic_year: 2026-27
+admission_cycle: Fall 2027
+source: https://aggiehero.ucdavis.edu/admissions/undergraduate/transfer/transfer-admission-guarantee/requirements
+verified_date: 2026-10-15
+requirements:
+  min_gpa:
+    college_of_agricultural_and_environmental_sciences: 3.2
+    college_of_biological_sciences: 3.2
+    college_of_letters_and_science: 3.2
+    college_of_engineering: 3.5
+    note: GPA in all UC-transferable coursework (and major preparation courses for Engineering), earned by end of summer 2026 and maintained thereafter.
+  min_units_at_tag_submission: 30 semester (45 quarter) UC-transferable units by end of summer 2026
+  min_units_at_transfer: 60 semester (90 quarter) UC-transferable units by end of spring 2027, with at least 30 semester (45 quarter) from a CCC
+  english:
+    - one UC-transferable English composition (UC-E) course with grade C or higher by end of fall 2026
+    - second UC-E may be in progress in spring 2027
+  math:
+    - one UC-transferable math/quantitative reasoning (UC-M) course with grade C or higher by end of fall 2026
+  seven_course_pattern: remaining courses (four from at least two of UC-H/UC-B/UC-S) completed by end of spring 2027
+  max_spring_units: no more than 19 UC-transferable units in spring 2027 (or last term) to reach junior standing
+  grade_floor: no grade lower than C in fall/winter/spring terms; remain in good academic standing
+  excluded_majors:
+    - Computer Science (College of Engineering)
+    - Data Science (College of Letters and Science)
+    - note: per UC Davis transfer pages, selective majors except business, computer science and data science are open to TAG
+  not_eligible:
+    - students who already earned a bachelor, graduate, or professional degree
+    - students previously enrolled at UC Davis during a regular term (excluding summer)
+    - students concurrently enrolled in high school when the TAG is submitted
+    - students concurrently enrolled in a 4-year (non-CCC) institution from TAG submission through enrollment term
+  enrollment_rules:
+    - enrolled at a CCC during the previous spring term, current fall term, and plan to continue through spring prior to fall enrollment
+    - last college attended in a regular session must be a CCC
+    - full-time enrollment strongly recommended; part-time students should justify in TAG application
+  tag_window: September 1-30
+  tag_major_must_match_uc_app_major: unknown
+  unit_cap_senior_standing: unknown
+  notes:
+    - TAG decisions released mid-November; Transfer Academic Update (TAU) due January 1-31.
+    - Selective majors may require additional major preparation courses with specific grades by spring 2027.

@@ -1,0 +1,40 @@
+school: UC Santa Barbara
+program: TAG
+academic_year: 2026-27
+admission_cycle: Fall 2027
+source: https://admissions.sa.ucsb.edu/tag
+verified_date: 2026-10-15
+requirements:
+  min_gpa:
+    all_majors: 3.4
+    note: 3.4 cumulative UC-transferable GPA by end of fall 2026; selective Letters and Science majors also require a minimum GPA in major preparation courses by end of the fall application term.
+  min_units_at_tag: 30 semester UC-transferable units by end of summer 2026
+  min_units_at_transfer:
+    - 60 semester UC-transferable units (junior standing) by end of spring 2027
+    - at least 30 semester UC-transferable units at one or more CCCs by spring 2027
+    - CCC must be the last school of attendance in a regular session
+  english_and_math:
+    - at least one UC-E (English) and one UC-M (math) completed by fall 2026
+    - remaining seven-course pattern completed by spring 2027
+  selective_major_preparation:
+    - required for: Actuarial Science, Biological Sciences, Chemistry and Biochemistry, Economics, Financial Mathematics and Statistics, Mathematics, Physics, Statistics and Data Science (College of Letters and Science)
+    - must be completed by end of spring term prior to transfer, with the required major preparation GPA by end of fall application term
+  excluded_majors:
+    - all majors in the College of Creative Studies
+    - all majors in the College of Engineering (including Computer Science)
+    - Dance B.A., Dance B.F.A., Music B.M., Theater B.F.A. (College of Letters and Science)
+  max_spring_units: no more than 19 UC-transferable units in spring 2027 to reach junior standing
+  max_total_units: must not exceed 80 semester total UC-transferable units after applying lower-division limits (CCC-only plus AP/IB/A-level students will not exceed this)
+  grade_floor: earn a 2.0 GPA in all UC-transferable coursework in the fall/winter/spring terms with no grade lower than C
+  senior_standing_rule: TAG does not apply to students with senior class standing (90+ semester / 135+ quarter UC-transferable units from accredited four-year universities, combined); AP/IB/A-level units do not count toward this limit; max 14 semester P/NP units toward admission eligibility
+  not_eligible:
+    - students who have baccalaureate degrees
+  enrollment_rules:
+    - AP exam units may be used toward the TAG unit requirement
+    - TAG is a guarantee but not binding; students admitted via TAG may enroll elsewhere
+  tag_window: September 1-30, 2026 (via UC Transfer Admission Planner / UC TAP)
+  uc_application_window: October 1-November 30, 2026
+  tag_major_must_match_uc_app_major: true
+  tau_deadline: January 31, 2027
+  notes:
+    - Some majors are pre-majors: TAG covers admission to the pre-major; students must complete remaining major preparation after transfer to advance to full major status.

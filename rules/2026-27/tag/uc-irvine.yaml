@@ -1,0 +1,51 @@
+school: UC Irvine
+program: TAG
+academic_year: 2026-27
+admission_cycle: Fall 2026 criteria published; Fall 2027 major exclusions confirmed
+source: https://admissions.uci.edu/apply/transfer/guaranteed-admission.php
+verified_date: 2026-10-15
+requirements:
+  min_gpa:
+    all_majors: 3.4
+    note: minimum 3.4 GPA in all UC-transferable coursework by end of fall term prior to transfer year, maintained through spring; selective majors may require higher GPA in major courses.
+  min_units_at_tag_submission: 30 semester (45 quarter) UC-transferable units by end of summer prior to transfer (AP/IB/A-level may count)
+  min_units_at_transfer: 60 semester (90 quarter) UC-transferable units by end of spring, with at least 30 semester (45 quarter) completed at one or more CCCs
+  english:
+    - one UC-transferable English composition (UC-E) with grade C or higher by end of fall term
+    - second UC-E with grade C or higher by end of spring term
+  math:
+    - one UC-transferable math/quantitative reasoning (UC-M) with grade C or higher by end of fall term
+  seven_course_pattern: four UC-transferable courses from at least two of Arts/Humanities, Social/Behavioral Sciences, Physical/Biological Sciences by end of spring, each with grade C or better
+  max_spring_units: no more than 19 UC-transferable semester units in progress in spring term to reach the 60-unit minimum
+  grade_floor: minimum 2.0 GPA in all UC-transferable coursework during the final academic year, with no grade lower than C in any of those terms
+  excluded_majors_fall_2027:
+    - Art
+    - Business Administration
+    - Dance
+    - Music
+    - Nursing Science
+    - all majors in the Donald Bren School of Information and Computer Sciences
+  excluded_majors_fall_2028_additions:
+    - Biological Sciences, Biology/Education, Ecology and Evolutionary Biology (School of Biological Sciences)
+    - Art, Dance, Music B.Mus (School of the Arts)
+    - all majors, Donald Bren School of Information and Computer Sciences
+    - Aerospace Engineering, Computer Engineering, Electrical Engineering, Mechanical Engineering (Engineering)
+    - Business Administration (Merage)
+    - Nursing Science
+    - Psychology B.A. (Social Ecology); Business Economics, Cognitive Sciences, Economics, Psychology B.S., Quantitative Economics (Social Sciences)
+  not_eligible:
+    - students who have baccalaureate degrees
+    - students attending high school in the fall term of the TAG year, even if simultaneously enrolled at a CCC
+    - former UC students who left UC not in good academic standing
+    - former UC Irvine students, except those enrolled only in summer sessions
+    - students who previously enrolled at a UC during a regular term (excluding summer) and intend to apply to the same UC
+  enrollment_rules:
+    - enrolled at one or more CCCs for at least 2 regular terms (excludes summer)
+    - attending a CCC as the last college before transfer (excludes summer), in good standing
+    - in good standing at ALL colleges attended
+  major_preparation: all major coursework for the chosen major, including prerequisites and minimum course GPA, completed by end of spring term
+  tag_window: September 1-30
+  uc_application_deadline: November 30
+  tag_major_must_match_uc_app_major: unknown
+  notes:
+    - Figures above reflect the published Fall 2026 TAG sheet; GPA threshold (3.4) and unit rules are stable across cycles, but fall-term GPA deadline shifts with the cycle year.

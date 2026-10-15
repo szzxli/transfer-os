@@ -30,7 +30,7 @@
 
 ## 路线图
 
-- **P0 数据地基**：3–5 所 CCC 试点爬取；6 所 UC 的 TAG 规则编码（Davis/Irvine/Merced/Riverside/San Diego/Santa Cruz）；规则库版本化
+- **P0 数据地基**：3–5 所 CCC 试点爬取；6 所 UC 的 TAG 规则编码（Davis/Irvine/Merced/Riverside/Santa Barbara/Santa Cruz）；规则库版本化
 - **P1 MVP Web**：Dashboard + TAG Guard（Vue 3 + Vite，成绩手动录入）
 - **P2 规划与选课**：Roadmap 生成器 + 选课推荐引擎（含 UC 在读生）
 - **P3 咨询与社区**：RAG 问答、PWA/移动端、社区规则维护飞轮
