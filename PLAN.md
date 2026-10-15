@@ -65,7 +65,7 @@
 - **P2 规划与选课**：Roadmap 生成器 + Cal-GETC/GE 路径引擎 + 开源跨校选课器（含 UC 在读生）
 - **P3 咨询与社区**：RAG 问答 Advisor、免费座位提醒、PWA/移动端；**开源飞轮：规则库接受社区 PR**——每年 TAG 规则变更靠社区维护，这是开源版真正的护城河
 
-**移动端路线**（P1 Web 跑通后执行）：Android 用 Capacitor 把 Web 版套壳出 APK（发文件直接安装试用）；iOS 先上 PWA（加到主屏幕，免开发者账号），有 Apple Developer 账号后再走 TestFlight。
+**移动端路线**（P1 Web 跑通后执行）：**先 Android**——用 Capacitor 把 Web 版套壳出 APK，发文件直接安装试用；**iOS 延后**（以后再处理，届时评估 PWA / TestFlight）。
 
 ## 五、开源策略
 
