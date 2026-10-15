@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TAG Guard · Transfer OS</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-in">
+    <div>
+      <div class="brand">🎓 TAG Guard</div>
+      <div class="sub" data-i18n="app_tag_sub"></div>
+    </div>
+    <div class="langswitch">
+      <button data-lang="zh" onclick="setLang('zh')">中文</button><button data-lang="en" onclick="setLang('en')">EN</button><button data-lang="es" onclick="setLang('es')">ES</button>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="card">
+    <label class="f" for="school" data-i18n="f_school"></label>
+    <select id="school"></select>
+
+    <div class="grid2">
+      <div>
+        <label class="f" for="gpa" data-i18n="f_gpa"></label>
+        <input id="gpa" type="number" step="0.01" min="0" max="4.5" inputmode="decimal" data-i18n-ph="ph_gpa">
+      </div>
+      <div>
+        <label class="f" for="units"><span data-i18n="f_units"></span> <span class="opt" data-i18n="f_units_unit"></span></label>
+        <input id="units" type="number" step="0.5" min="0" inputmode="decimal" data-i18n-ph="ph_units">
+      </div>
+    </div>
+
+    <label class="f" for="major"><span data-i18n="f_major"></span> <span class="opt" data-i18n="f_major_hint"></span></label>
+    <input id="major" type="text" data-i18n-ph="ph_major" autocomplete="off">
+
+    <div class="grid2">
+      <div>
+        <label class="f" for="english"><span data-i18n="f_english"></span> <span class="opt" data-i18n="f_english_unit"></span></label>
+        <input id="english" type="number" min="0" max="4" inputmode="numeric" data-i18n-ph="ph_english">
+      </div>
+      <div>
+        <label class="f" for="math"><span data-i18n="f_math"></span> <span class="opt" data-i18n="f_math_unit"></span></label>
+        <input id="math" type="number" min="0" max="4" inputmode="numeric" data-i18n-ph="ph_math">
+      </div>
+    </div>
+
+    <label class="f" for="spring"><span data-i18n="f_spring"></span> <span class="opt" data-i18n="f_spring_opt"></span></label>
+    <input id="spring" type="number" step="0.5" min="0" inputmode="decimal" data-i18n-ph="ph_spring">
+
+    <label class="checkline"><input type="checkbox" id="prep"><span data-i18n="f_prep_done"></span></label>
+    <label class="checkline"><input type="checkbox" id="bachelor"><span data-i18n="f_has_bachelor"></span></label>
+
+    <button class="btn" id="go" onclick="tag_run()" data-i18n="btn_check"></button>
+  </div>
+
+  <div id="result"></div>
+
+  <div class="disclaimer" data-i18n="disclaimer_tag"></div>
+</div>
+
+<nav class="tabbar">
+  <a href="index.html" class="active"><span class="ico">🎓</span><span data-i18n="nav_tag"></span></a>
+  <a href="compare.html"><span class="ico">🔀</span><span data-i18n="nav_compare"></span></a>
+</nav>
+
+<script src="js/tag-data.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/tag-engine.js"></script>
+<script src="js/app-tag.js"></script>
+</body>
+</html>
