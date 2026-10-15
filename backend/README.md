@@ -8,7 +8,16 @@ Python 实现。核心原则：**所有资格判定走规则引擎（YAML 规则
   - `loader.py`：加载 `rules/2026-27/tag/*.yaml`
   - `checker.py`：`check_eligibility(school, profile)`，输出逐项 pass/fail/warn/skip、TAG 评分、风险提示
   - 规则中标为 `unknown` 的字段一律跳过（skip），不判死刑，并提示人工核对官网
-- `demo/` — FastAPI 最小 Web 演示（`POST /api/tag-check` + 单页表单）
+- `demo/` — FastAPI 最小 Web 演示
+  - `POST /api/tag-check` + 单页表单（`/`，TAG Guard）
+  - `POST /api/compare` + 对比页（`/compare`，Articulation 对比器）
+  - `GET /api/compare-options` — 对比器可用的 CC/目标校/专业选项
+- `comparator/` — Articulation 对比器引擎（P1b）
+  - `engine.py`：`compare(cc_name, major_query, target_names, student_courses)`，
+    输出每所目标校的统一矩阵：covered/missing/no_articulation，
+    附缺失清单、白修预警（denied）、转学后必修清单
+  - 数据来自 `data/raw/assist_*.json`（`scrapers/batch_fetch.py` 抓取，gitignored）；
+    无协议的组合标 `no_agreement`（未知，不判死）
 - `tests/` — pytest 测试
 
 ## 快速开始
@@ -31,6 +40,19 @@ uvicorn demo.app:app --reload --port 8000
 
 - `GET /api/schools` — 可用学校列表
 - `POST /api/tag-check` — TAG 资格检查
+- `GET /api/compare-options` — 对比器选项（CC → 目标校 → 专业）
+- `POST /api/compare` — 多校 articulation 对比
+
+对比请求示例：
+
+```json
+{
+  "cc_name": "Orange Coast College",
+  "major_query": "computer science",
+  "targets": ["UC Berkeley", "UC San Diego"],
+  "courses": ["CS A250", "CS A200", "MATH A180"]
+}
+```
 
 请求示例：
 

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Articulation 对比器演示</title>
+<style>
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 860px; margin: 0 auto; padding: 20px; background: #f6f7f9; color: #222; }
+  h1 { font-size: 22px; }
+  .card { background: #fff; border-radius: 10px; padding: 16px; margin: 12px 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  label { display: block; margin: 8px 0 4px; font-size: 14px; color: #555; }
+  input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+  textarea { height: 70px; }
+  button { background: #1a73e8; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 15px; cursor: pointer; margin-top: 10px; }
+  button:disabled { background: #aaa; }
+  .tgt { display: inline-block; margin: 4px 8px 4px 0; font-size: 14px; }
+  .tgt input { width: auto; margin-right: 4px; }
+  .matrix { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  .matrix th, .matrix td { border: 1px solid #e0e0e0; padding: 6px 8px; text-align: left; vertical-align: top; }
+  .matrix th { background: #f0f4f8; }
+  .st { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 10px; color: #fff; }
+  .st.covered { background: #1a7f37; } .st.missing { background: #c62828; }
+  .st.no_articulation { background: #e6a23c; } .st.no_agreement { background: #909399; }
+  .pct { font-size: 30px; font-weight: 700; }
+  .warn { background: #fff8e6; border: 1px solid #f0d98c; border-radius: 6px; padding: 8px 12px; margin: 6px 0; font-size: 14px; }
+  .meta { font-size: 12px; color: #888; margin-top: 8px; }
+  .hint { font-size: 13px; color: #888; }
+  .nav { font-size: 14px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="/">← TAG Guard</a></div>
+<h1>🔀 Articulation 对比器 <span class="hint">（ASSIST 公开协议数据，仅供参考）</span></h1>
+
+<div class="card">
+  <label>社区大学</label>
+  <select id="cc"><option>加载中…</option></select>
+  <label>目标学校（可多选）</label>
+  <div id="targets"></div>
+  <label>专业查询词</label>
+  <input id="major" value="computer science" placeholder="如 computer science">
+  <label>已修 / 计划修课程（每行一门，如 CS A250）</label>
+  <textarea id="courses" placeholder="CS A250&#10;MATH A180&#10;ENGL A100"></textarea>
+  <button id="go" onclick="run()">生成对比矩阵</button>
+</div>
+
+<div id="result"></div>
+
+<script>
+let OPTS = null;
+async function init() {
+  const r = await fetch('/api/compare-options');
+  OPTS = await r.json();
+  const cc = document.getElementById('cc');
+  cc.innerHTML = OPTS.ccs.map(c => `<option>${c}</option>`).join('');
+  cc.onchange = renderTargets;
+  renderTargets();
+}
+function renderTargets() {
+  const cc = document.getElementById('cc').value;
+  const box = document.getElementById('targets');
+  const tgts = Object.keys(OPTS.by_cc[cc] || {});
+  box.innerHTML = tgts.map(t =>
+    `<label class="tgt"><input type="checkbox" value="${t}" checked>${t}</label>`
+  ).join('') || '<span class="hint">该 CC 暂无已抓取报告</span>';
+}
+function stBadge(s) {
+  const m = {covered:'已覆盖', missing:'缺失', no_articulation:'转学后必修', no_agreement:'无协议'};
+  return `<span class="st ${s}">${m[s]||s}</span>`;
+}
+async function run() {
+  const btn = document.getElementById('go');
+  btn.disabled = true; btn.textContent = '计算中…';
+  const targets = [...document.querySelectorAll('#targets input:checked')].map(i => i.value);
+  const courses = document.getElementById('courses').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const body = {cc_name: document.getElementById('cc').value,
+                major_query: document.getElementById('major').value,
+                targets, courses};
+  const r = await fetch('/api/compare', {method:'POST',
+    headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+  const d = await r.json();
+  btn.disabled = false; btn.textContent = '生成对比矩阵';
+  const box = document.getElementById('result');
+  if (d.error) { box.innerHTML = `<div class="card">出错：${d.error}</div>`; return; }
+  let html = '';
+  for (const t of d.targets) {
+    if (t.status === 'no_agreement') {
+      html += `<div class="card"><h3>${t.target_name}</h3>${stBadge('no_agreement')}<div class="meta">${t.note}</div></div>`;
+      continue;
+    }
+    const rows = t.items.map(i => `<tr><td>${i.target_code}<br><span class="hint">${i.target_title||''}</span></td><td>${stBadge(i.status)}</td><td>${i.status==='covered' ? '经 ' + i.via.join(' + ') : (i.options.join(' 或 ') || i.detail)}</td></tr>`).join('');
+    const wasted = t.wasted.length ? `<div class="warn">⚠️ 白修预警：${t.wasted.map(w=>w.cc_code).join('、')} —— ${t.wasted[0].note}</div>` : '';
+    html += `<div class="card"><h3>${t.target_name} <span class="hint">${t.major_label||''}</span></h3>
+      <div><span class="pct">${t.coverage_pct}%</span> <span class="hint">覆盖 ${t.covered}/${t.total_requirements} 项要求</span></div>
+      ${wasted}
+      <table class="matrix"><tr><th>目标校要求</th><th>状态</th><th>说明</th></tr>${rows}</table>
+      <div class="meta">协议发布：${t.published_date||'未知'} · 学年 ${t.academic_year||''}</div></div>`;
+  }
+  box.innerHTML = html || '<div class="card">无结果</div>';
+}
+init();
+</script>
+</body>
+</html>
