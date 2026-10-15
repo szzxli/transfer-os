@@ -1,0 +1,158 @@
+# =============================================================================
+# Cal-GETC — California General Education Transfer Curriculum（2026-27 学年）
+# =============================================================================
+# 【IGETC vs Cal-GETC 关键差异】（依据 ICAS Cal-GETC Standards 与各校官方说明）
+#
+# 1. 统一为单一路径：IGETC 有 UC 版 / CSU 版两个变体；Cal-GETC 只有一套，
+#    同时满足 UC 与 CSU 的 lower-division GE。生效：Fall 2025（AB 928）。
+# 2. Area 数量：Cal-GETC 共 6 个 Area（注意：不是 7 个）。
+#    IGETC 另有 Area 6A "Language Other Than English"（UC 要求），Cal-GETC
+#    取消了语言要求。UC 的 LOTE 毕业要求仍然存在，但 CCC 不能在 Cal-GETC
+#    框架下为其做认证（Santa Rosa College 说明）。
+# 3. Oral Communication（1C）：IGETC 时 UC-bound 学生不需要 1C；
+#    Cal-GETC 要求所有人完成 1C（UC 转学生新增口语课要求）。
+# 4. 新增 Area 6 Ethnic Studies（3 学分），IGETC 没有该 Area。
+# 5. 总学分：Cal-GETC 固定 34 semester units / 11 门课；
+#    IGETC 为 37（CSU）/ 34-37（UC）。
+# 6. Catalog rights：Fall 2025 起入读 CCC 的新生走 Cal-GETC；
+#    Fall 2025 前连续入读的老生可保留 IGETC/CSU GE，也可自愿转 Cal-GETC。
+#    UC 无全系统 catalog rights 政策，暂同时接受 IGETC 与 Cal-GETC 认证。
+# 7. CSU American Institutions（US History/Constitution）不属于 Cal-GETC，
+#    但 CCC 可单独认证，一门课可同时满足该要求与 Cal-GETC 某 Area。
+# =============================================================================
+program: Cal-GETC
+full_name: California General Education Transfer Curriculum
+academic_year: 2026-27
+effective_from: Fall 2025
+authority: AB 928
+verified_date: '2026-10-15'
+sources:
+- https://icas-ca.org/cal-getc-standards/
+- https://cccco.edu/-/media/CCCCO-Website/docs/memo/Cal-GETC-Administrative-Implementation-Guidance.pdf
+- https://smccd.edu/general-education/calgetc.php
+- https://scc.losrios.edu/2026-2027-unofficial-catalog-preview/graduation-and-transfer/preparing-to-transfer/california-general-education-transfer-curriculum-requirements
+total:
+  semester_units: 34
+  quarter_units: 45
+  courses: 11
+  quarter_units_note: 12+4+8+8+9+4，由各 Area quarter 学分加总（ICAS 数据推导）
+areas:
+  area_1:
+    name: English Communication
+    semester_units: 9
+    quarter_units: 12
+    subareas:
+      1A:
+        name: English Composition
+        courses_required: 1
+        semester_units: 3
+        quarter_units: 4
+      1B:
+        name: Critical Thinking and Composition
+        courses_required: 1
+        semester_units: 3
+        quarter_units: 4
+      1C:
+        name: Oral Communication
+        courses_required: 1
+        semester_units: 3
+        quarter_units: 4
+        note: IGETC 时代 UC-bound 不需要；Cal-GETC 所有人必修
+  area_2:
+    name: Mathematical Concepts and Quantitative Reasoning
+    courses_required: 1
+    semester_units: 3
+    quarter_units: 4
+  area_3:
+    name: Arts and Humanities
+    semester_units: 6
+    quarter_units: 8
+    subareas:
+      3A:
+        name: Arts
+        courses_required: 1
+        semester_units: 3
+        quarter_units: 4
+      3B:
+        name: Humanities
+        courses_required: 1
+        semester_units: 3
+        quarter_units: 4
+  area_4:
+    name: Social and Behavioral Sciences
+    courses_required: 2
+    semester_units: 6
+    quarter_units: 8
+    constraint: 2 courses from 2 different academic disciplines
+  area_5:
+    name: Physical and Biological Sciences
+    semester_units: 7
+    quarter_units: 9
+    subareas:
+      5A:
+        name: Physical Science
+        courses_required: 1
+        semester_units: 3
+        quarter_units: 4
+      5B:
+        name: Biological Science
+        courses_required: 1
+        semester_units: 3
+        quarter_units: 4
+      5C:
+        name: Laboratory
+        courses_required: 1
+        semester_units: 1
+        quarter_units: 1
+        constraint: must be associated with a Physical or Biological Science course
+  area_6:
+    name: Ethnic Studies
+    courses_required: 1
+    semester_units: 3
+    quarter_units: 4
+    constraint: course must be in Ethnic Studies or cross-listed with Ethnic Studies
+certification_rules:
+  min_grade: C or better
+  min_grade_source: Los Rios / Las Positas / Butte 一致
+  double_counting: not allowed
+  double_counting_source: Norco College：一门课不可同时满足两个 Area
+  list_year_rule: course must be on the college's approved Cal-GETC list for the academic
+    year taken
+  pre_fall_2025_courses: courses taken before Fall 2025 that were on the IGETC pattern
+    that year may count toward the same Cal-GETC area(s)
+  pre_fall_2025_source: Las Positas College
+  pass_no_pass_limit: max 14 semester units (21 quarter units) of P/NP toward certification
+  pass_no_pass_source: Norco College
+  partial_certification: not permitted per Chabot College ('At this time'——政策可能变，待复核)
+  how_to_certify: petition at the CCC admissions office after accepting an admission
+    offer
+  how_to_certify_source: Chabot College
+catalog_rights:
+  fall_2025_and_later_new_students: Cal-GETC（唯一 GE 路径）
+  continuous_enrollment_before_fall_2025: may keep IGETC or CSU GE Breadth, or voluntarily
+    opt into Cal-GETC
+  uc_policy: no systemwide catalog-rights policy; UC accepts both IGETC and Cal-GETC
+    certifications 'for the time being'
+  uc_policy_source: CCCCO 实施指引
+  uc_readmits: students who enrolled at a UC, left for a CCC, then return to the SAME
+    UC campus cannot use Cal-GETC
+  uc_readmits_source: Chabot College / Santiago Canyon College
+not_recommended_for:
+  majors:
+  - Engineering
+  - Mathematics
+  - Life and physical sciences
+  - Premed tracks
+  - Business (sometimes)
+  source: https://www.chabotcollege.edu/counseling/transfer/docs/ge-transfer-flyers/calgetc/calgetc%202025-26.pdf
+  note: 这些专业应优先完成 major preparation，而非把 Cal-GETC 修满；部分 UC 学院不把 Cal-GETC 视为 lower-division
+    breadth 的完整满足
+  campus_specific_non_acceptance_list: unknown
+  campus_specific_note: 各校说明仅写 'some colleges or schools'，未逐项列出，需按目标校逐个核验
+  ucd_engineering_igetc_era_note: UC Davis College of Engineering（IGETC 时代）明确建议转学生不要修完
+    IGETC，应聚焦专业先修；Cal-GETC 时代建议向院系单独确认
+unknown_fields:
+- per_campus_cal_getc_acceptance_matrix
+- tag_interaction
+- ap_ib_credit_mapping
+unknown_fields_note: 未能从官方渠道核验的字段一律标 unknown，不编造

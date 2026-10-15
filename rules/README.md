@@ -12,7 +12,7 @@ rules/
       uc-riverside.yaml
       uc-san-diego.yaml
       uc-santa-cruz.yaml
-    igetc.yaml
+    cal-getc.yaml          # Fall 2025 起取代 IGETC，为单一 GE 路径
     majors/
       cs.yaml            # 以 CS 为例，各专业先修要求
 ```
