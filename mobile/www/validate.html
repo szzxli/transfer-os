@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Plan Check · Transfer OS</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-in">
+    <div>
+      <div class="brand">📋 Transfer OS</div>
+      <div class="sub" data-i18n="app_val_sub"></div>
+    </div>
+    <div class="langswitch">
+      <button data-lang="zh" onclick="setLang('zh')">中文</button><button data-lang="en" onclick="setLang('en')">EN</button><button data-lang="es" onclick="setLang('es')">ES</button>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="card">
+    <label class="f" for="cc" data-i18n="f_cc"></label>
+    <select id="cc"></select>
+
+    <label class="f"><span data-i18n="f_targets"></span> <span class="opt" data-i18n="f_targets_opt"></span></label>
+    <div class="chips" id="targets"></div>
+
+    <label class="f" for="major" data-i18n="f_major2"></label>
+    <input id="major" type="text" value="computer science" data-i18n-ph="ph_major2" autocomplete="off">
+    <div class="hint" data-i18n="f_major2_hint"></div>
+
+    <label class="f" for="plan"><span data-i18n="f_plan"></span> <span class="opt" data-i18n="f_plan_opt"></span></label>
+    <textarea id="plan" rows="8" data-i18n-ph="ph_plan"></textarea>
+
+    <button class="btn" id="go" onclick="va_run()" data-i18n="btn_validate"></button>
+  </div>
+
+  <div id="result"></div>
+
+  <div class="disclaimer" data-i18n="disclaimer_validate"></div>
+</div>
+
+<nav class="tabbar">
+  <a href="index.html"><span class="ico">🎓</span><span data-i18n="nav_tag"></span></a>
+  <a href="compare.html"><span class="ico">🔀</span><span data-i18n="nav_compare"></span></a>
+  <a href="validate.html" class="active"><span class="ico">📋</span><span data-i18n="nav_validate"></span></a>
+</nav>
+
+<script src="js/artic-data.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/comparator.js"></script>
+<script src="js/validator.js"></script>
+<script src="js/app-validate.js"></script>
+</body>
+</html>

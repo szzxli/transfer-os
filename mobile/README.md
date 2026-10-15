@@ -5,17 +5,20 @@
 ```
 mobile/
   www/                  # 纯静态离线 App（WebView / 浏览器直接打开即用）
-    index.html          # TAG Guard（三语）
-    compare.html        # Articulation 对比器（三语）
+    index.html          # TAG Guard（三语）：6 校 TAG 资格逐项检查
+    compare.html        # Articulation 对比器（三语）：多校覆盖矩阵
+    validate.html       # 课程计划校验器（三语）：按学期审查 + 白修预警 + 浪费汇总
     css/app.css         # 移动优先共享样式
     js/
       tag-data.js       # 6 校 TAG 规则（自动生成）
-      artic-data.js     # 25 份 articulation 报告（自动生成，紧凑格式）
-      i18n.js           # 中文/English/Español 字典 + 语言切换
+      artic-data.js     # 25 份 articulation 报告（自动生成，紧凑格式，含 cu=cc_units）
+      i18n.js           # 中文/English/Español 字典 + 语言切换 + i18n_check() 启动自检
       tag-engine.js     # TAG 规则引擎（由 backend/tag_engine/checker.py 移植）
       comparator.js     # 对比引擎（由 backend/comparator/engine.py 移植）
+      validator.js      # 校验器引擎（由 backend/validator/engine.py 移植，前缀 va_）
       app-tag.js        # TAG 页面逻辑
       app-compare.js    # 对比页面逻辑
+      app-validate.js   # 校验器页面逻辑（含学期文本解析 + VA_KEYS 自检）
   scripts/
     build-data.py       # 数据打包：rules/*.yaml + data/raw/*.json → www/js/*-data.js
   TransferOS-debug.apk  # debug 签名，可直接安装试用（离线运行）

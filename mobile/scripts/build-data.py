@@ -47,12 +47,13 @@ def build_artic_data() -> list:
         r = payload.get("report") or {}
         if not r.get("mappings"):
             continue
-        # 紧凑映射：只保留对比器需要的字段
+        # 紧凑映射：只保留对比器/校验器需要的字段（cu=cc_units，供浪费计数器用）
         mappings = []
         for m in r["mappings"]:
             mappings.append({
                 "cc": m.get("cc_code") or "",
                 "cc_t": m.get("cc_title") or "",
+                "cu": m.get("cc_units") or "",
                 "tc": m.get("target_code") or "",
                 "tt": m.get("target_title") or "",
                 "st": m.get("status") or "",
