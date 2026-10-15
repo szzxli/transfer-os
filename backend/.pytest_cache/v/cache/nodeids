@@ -1,0 +1,20 @@
+[
+  "tests/test_tag_engine.py::test_bachelor_degree_fails",
+  "tests/test_tag_engine.py::test_davis_unknown_major_match_skipped",
+  "tests/test_tag_engine.py::test_english_none_done_fails",
+  "tests/test_tag_engine.py::test_english_one_done_warns",
+  "tests/test_tag_engine.py::test_irvine_excluded_majors_multi_keys",
+  "tests/test_tag_engine.py::test_list_schools_has_six",
+  "tests/test_tag_engine.py::test_missing_gpa_warns_not_fails",
+  "tests/test_tag_engine.py::test_result_shape",
+  "tests/test_tag_engine.py::test_riverside_eligible",
+  "tests/test_tag_engine.py::test_riverside_excluded_major_fails",
+  "tests/test_tag_engine.py::test_riverside_gpa_below_threshold_fails",
+  "tests/test_tag_engine.py::test_riverside_gpa_uses_college_fallback",
+  "tests/test_tag_engine.py::test_riverside_units_below_30_fails",
+  "tests/test_tag_engine.py::test_santa_cruz_unknown_excluded_majors_skipped",
+  "tests/test_tag_engine.py::test_school_name_variants",
+  "tests/test_tag_engine.py::test_score_clamped_zero",
+  "tests/test_tag_engine.py::test_spring_units_over_limit_warns",
+  "tests/test_tag_engine.py::test_unknown_school_raises"
+]

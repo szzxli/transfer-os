@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAG Guard 演示</title>
+<style>
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 720px; margin: 0 auto; padding: 20px; background: #f6f7f9; color: #222; }
+  h1 { font-size: 22px; }
+  .card { background: #fff; border-radius: 10px; padding: 16px; margin: 12px 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  label { display: block; margin: 8px 0 4px; font-size: 14px; color: #555; }
+  input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+  .row { display: flex; gap: 10px; } .row > div { flex: 1; }
+  .chk { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 14px; }
+  .chk input { width: auto; }
+  button { background: #1a73e8; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 15px; cursor: pointer; margin-top: 10px; }
+  button:disabled { background: #aaa; }
+  .score { font-size: 44px; font-weight: 700; }
+  .verdict-ok { color: #1a7f37; } .verdict-bad { color: #c62828; }
+  .check { border-left: 4px solid #ccc; padding: 8px 12px; margin: 8px 0; background: #fafafa; border-radius: 0 6px 6px 0; }
+  .check.pass { border-color: #1a7f37; } .check.fail { border-color: #c62828; }
+  .check.warn { border-color: #e6a23c; } .check.skip { border-color: #909399; }
+  .badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 10px; color: #fff; margin-right: 6px; }
+  .pass .badge { background: #1a7f37; } .fail .badge { background: #c62828; }
+  .warn .badge { background: #e6a23c; } .skip .badge { background: #909399; }
+  .detail { font-size: 13px; color: #555; margin-top: 4px; }
+  .risk { background: #fff8e6; border: 1px solid #f0d98c; border-radius: 6px; padding: 8px 12px; margin: 6px 0; font-size: 14px; }
+  .meta { font-size: 12px; color: #888; margin-top: 8px; }
+  .hint { font-size: 13px; color: #888; }
+</style>
+</head>
+<body>
+<h1>🎓 TAG Guard 演示 <span class="hint">（规则引擎判定，仅供参考）</span></h1>
+
+<div class="card">
+  <label>目标学校</label>
+  <select id="school"><option>加载中…</option></select>
+  <div class="row">
+    <div><label>GPA</label><input id="gpa" type="number" step="0.01" min="0" max="4.5" placeholder="如 3.7"></div>
+    <div><label>已完成学分（semester）</label><input id="units" type="number" step="0.5" placeholder="如 32"></div>
+  </div>
+  <div class="row">
+    <div><label>学院（英文 key，可空）</label><input id="college" placeholder="如 bourns_college_of_engineering"></div>
+    <div><label>目标专业（英文 key，可空）</label><input id="major" placeholder="如 computer_science"></div>
+  </div>
+  <div class="row">
+    <div><label>已完成英语 UC-E 门数</label><input id="english" type="number" min="0" max="4" placeholder="0-2"></div>
+    <div><label>已完成数学 UC-M 门数</label><input id="math" type="number" min="0" max="4" placeholder="0-2"></div>
+  </div>
+  <div class="row">
+    <div><label>计划 Spring 学分（可空）</label><input id="spring" type="number" step="0.5" placeholder="如 15"></div>
+    <div></div>
+  </div>
+  <div class="chk"><input type="checkbox" id="prep"><span>专业先修已完成</span></div>
+  <div class="chk"><input type="checkbox" id="bachelor"><span>已有学士学位</span></div>
+  <button id="go" onclick="check()">检查 TAG 资格</button>
+</div>
+
+<div id="result"></div>
+
+<script>
+async function loadSchools() {
+  const r = await fetch('/api/schools');
+  const j = await r.json();
+  const sel = document.getElementById('school');
+  sel.innerHTML = j.schools.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+loadSchools();
+
+const CN = { pass: '通过', fail: '不通过', warn: '注意', skip: '跳过' };
+
+async function check() {
+  const btn = document.getElementById('go');
+  btn.disabled = true; btn.textContent = '检查中…';
+  const v = id => document.getElementById(id).value;
+  const num = id => { const x = v(id); return x === '' ? null : parseFloat(x); };
+  const body = {
+    school: v('school'),
+    profile: {
+      gpa: num('gpa'),
+      college: v('college') || null,
+      major: v('major') || null,
+      units_completed: num('units'),
+      english_done: num('english') === null ? null : parseInt(v('english')),
+      math_done: num('math') === null ? null : parseInt(v('math')),
+      major_prep_done: document.getElementById('prep').checked ? true : null,
+      has_bachelor_degree: document.getElementById('bachelor').checked,
+      spring_units_planned: num('spring'),
+    }
+  };
+  try {
+    const r = await fetch('/api/tag-check', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const j = await r.json();
+    render(j);
+  } catch (e) {
+    document.getElementById('result').innerHTML = `<div class="card">请求失败：${e}</div>`;
+  }
+  btn.disabled = false; btn.textContent = '检查 TAG 资格';
+}
+
+function render(j) {
+  if (j.error) {
+    document.getElementById('result').innerHTML = `<div class="card">错误：${j.error}</div>`;
+    return;
+  }
+  const verdict = j.eligible
+    ? `<span class="verdict-ok">✅ 基本符合 TAG 条件</span>`
+    : `<span class="verdict-bad">❌ 存在硬伤，不符合 TAG</span>`;
+  const checks = j.checks.map(c => `
+    <div class="check ${c.status}">
+      <span class="badge">${CN[c.status] || c.status}</span><b>${c.label}</b>
+      <div class="detail">${c.detail}</div>
+    </div>`).join('');
+  const risks = (j.risks || []).map(x => `<div class="risk">⚠️ ${x}</div>`).join('');
+  const info = j.info || {};
+  document.getElementById('result').innerHTML = `
+    <div class="card">
+      <div class="score">${j.score}<span style="font-size:16px;color:#888">/100</span></div>
+      <div>${verdict}</div>
+      <div class="meta">TAG 评分是启发式分数，仅供参考，不代表录取概率。</div>
+    </div>
+    <div class="card"><h3>逐项检查</h3>${checks}</div>
+    ${risks ? `<div class="card"><h3>风险提示</h3>${risks}</div>` : ''}
+    <div class="card meta">
+      申请窗口：${info.tag_window || '—'} ｜ UC 申请：${info.uc_application || '—'}
+      ${info.tau_deadline ? `｜ TAU 截止：${info.tau_deadline}` : ''}<br>
+      数据来源：<a href="${info.source}" target="_blank">${info.source || ''}</a>（核验日期 ${info.verified_date || ''}）<br>
+      ${j._disclaimer || ''}
+    </div>`;
+}
+</script>
+</body>
+</html>
