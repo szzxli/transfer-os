@@ -111,6 +111,33 @@ d_noagreement: "未找到该组合的 articulation 协议（可能无协议或�
 d_main_note: "基于 ASSIST 公开协议数据，仅供参考，以学校官网为准。",
 d_via: p => `✓ 经 ${p.via}`,
 d_fill_one: p => `修以下任一门可补上：${p.options}`,
+/* ---------- 校验器 ---------- */
+app_val_sub: "逐门审查你的选课计划 · 白修预警，ASSIST 公开协议数据",
+nav_validate: "计划校验",
+f_plan: "学期课程表", f_plan_opt: "(每学期一行标题，其下每行一门课)",
+ph_plan: "Fall 2026:\nCS A250\nMATH A180\n\nSpring 2027:\nCS A200",
+btn_validate: "审查课程计划",
+disclaimer_validate: "数据来自 ASSIST 公开 articulation 协议（2026-2027 学年），仅供规划参考，以学校官网为准。标“存疑”的课程可能是 GE 课，请对照 Cal-GETC 清单核实后再决定是否退课。",
+sec_waste: "浪费汇总",
+sec_incomplete: "未完成的要求",
+v_wasted_units_line: p => `实锤浪费 ${p.u} 学分 ≈ 多读 ${p.t} 学期`,
+v_no_waste: "未发现实锤浪费课程 🎉",
+v_at_risk_line: p => `存疑课程 ${p.n} 门（可能是 GE 课，请对照 Cal-GETC 清单核实）`,
+v_unknown_units: "学分未知",
+v_term_wasted: p => `本学期实锤浪费 ${p.u} 学分`,
+v_note_ok: "可转学分",
+v_note_ok_partial: "；部分要求需补同伴课程",
+v_note_denied: "白修实锤：被目标校明确拒绝承认",
+v_note_unknown: "未在专业 articulation 协议中找到——可能是 GE 课程，请对照 Cal-GETC 清单核实",
+v_denied_noname: "被明确拒绝承认",
+v_baseline_note: p => `以 60 semester 学分、每学期 15 学分为基准：实锤浪费 ${p.u} 学分 ≈ 多读 ${p.t} 学期`,
+v_main_note: "基于 ASSIST 公开协议数据，仅供参考，以学校官网为准。标“存疑”的课程可能是 GE 课，请对照 Cal-GETC 清单核实后再决定是否退课。",
+v_missing_partners: p => `还需修：${p.list}`,
+v_satisfies: p => `满足 ${p.target} ${p.code}`,
+v_and_incomplete: "（未完成，需补同伴课程）",
+v_denied_at: p => `被 ${p.school} 拒绝`,
+v_no_agreement_line: p => `以下学校无协议数据：${p.list}`,
+v_st_ok: "可转学分", v_st_denied: "被拒", v_st_unknown: "存疑",
 },
 
 en: {
@@ -217,6 +244,33 @@ d_noagreement: "No articulation agreement found for this combination (may not ex
 d_main_note: "Based on public ASSIST agreement data, for reference only. Verify on official websites.",
 d_via: p => `✓ via ${p.via}`,
 d_fill_one: p => `Take any one of these: ${p.options}`,
+/* ---------- 校验器 ---------- */
+app_val_sub: "Review your course plan course by course · wasted-unit alerts, public ASSIST data",
+nav_validate: "Plan Check",
+f_plan: "Term-by-term course plan", f_plan_opt: "(one term title per line, then one course per line)",
+ph_plan: "Fall 2026:\nCS A250\nMATH A180\n\nSpring 2027:\nCS A200",
+btn_validate: "Review Course Plan",
+disclaimer_validate: "Data comes from public ASSIST articulation agreements (2026–2027), for planning reference only — always verify on official websites. Courses marked 'unverified' may be GE courses; check them against the Cal-GETC list before dropping.",
+sec_waste: "Waste Summary",
+sec_incomplete: "Incomplete Requirements",
+v_wasted_units_line: p => `Confirmed waste: ${p.u} units ≈ ${p.t} extra term(s)`,
+v_no_waste: "No confirmed wasted courses 🎉",
+v_at_risk_line: p => `${p.n} unverified course(s) (may be GE — check against the Cal-GETC list)`,
+v_unknown_units: "units unknown",
+v_term_wasted: p => `Confirmed waste this term: ${p.u} units`,
+v_note_ok: "Transferable",
+v_note_ok_partial: "; some requirements need companion courses",
+v_note_denied: "Confirmed waste: explicitly denied by the target campus",
+v_note_unknown: "Not found in the major articulation agreement — may be a GE course, verify against the Cal-GETC list",
+v_denied_noname: "explicitly denied",
+v_baseline_note: p => `Based on 60 semester units / 15 per term: confirmed waste of ${p.u} units ≈ ${p.t} extra term(s)`,
+v_main_note: "Based on public ASSIST agreement data, for reference only. Verify on official websites. Courses marked 'unverified' may be GE courses — check the Cal-GETC list before dropping.",
+v_missing_partners: p => `Still need: ${p.list}`,
+v_satisfies: p => `Satisfies ${p.target} ${p.code}`,
+v_and_incomplete: " (incomplete — companion courses needed)",
+v_denied_at: p => `Denied by ${p.school}`,
+v_no_agreement_line: p => `No agreement data for: ${p.list}`,
+v_st_ok: "Transferable", v_st_denied: "Denied", v_st_unknown: "Unverified",
 },
 
 es: {
@@ -323,6 +377,33 @@ d_noagreement: "No se encontró convenio de articulación para esta combinación
 d_main_note: "Basado en datos públicos de convenios ASSIST, solo de referencia. Verifica en los sitios oficiales.",
 d_via: p => `✓ vía ${p.via}`,
 d_fill_one: p => `Toma cualquiera de estos: ${p.options}`,
+/* ---------- 校验器 ---------- */
+app_val_sub: "Revisa tu plan de cursos curso por curso · alertas de unidades desperdiciadas, datos públicos de ASSIST",
+nav_validate: "Revisar plan",
+f_plan: "Plan de cursos por semestre", f_plan_opt: "(un título de semestre por línea, luego un curso por línea)",
+ph_plan: "Fall 2026:\nCS A250\nMATH A180\n\nSpring 2027:\nCS A200",
+btn_validate: "Revisar plan de cursos",
+disclaimer_validate: "Datos de convenios públicos de articulación de ASSIST (2026–2027), solo de referencia — verifica siempre en los sitios oficiales. Los cursos marcados 'sin verificar' pueden ser de GE; consúltalos en la lista Cal-GETC antes de abandonarlos.",
+sec_waste: "Resumen de desperdicio",
+sec_incomplete: "Requisitos incompletos",
+v_wasted_units_line: p => `Desperdicio confirmado: ${p.u} unidades ≈ ${p.t} semestre(s) extra`,
+v_no_waste: "Sin cursos desperdiciados confirmados 🎉",
+v_at_risk_line: p => `${p.n} curso(s) sin verificar (pueden ser de GE — consulta la lista Cal-GETC)`,
+v_unknown_units: "unidades desconocidas",
+v_term_wasted: p => `Desperdicio confirmado este semestre: ${p.u} unidades`,
+v_note_ok: "Transferible",
+v_note_ok_partial: "; algunos requisitos necesitan cursos complementarios",
+v_note_denied: "Desperdicio confirmado: explícitamente denegado por la universidad de destino",
+v_note_unknown: "No encontrado en el convenio de articulación de la carrera — puede ser un curso de GE, verifica en la lista Cal-GETC",
+v_denied_noname: "explícitamente denegado",
+v_baseline_note: p => `Basado en 60 unidades semestrales / 15 por semestre: desperdicio confirmado de ${p.u} unidades ≈ ${p.t} semestre(s) extra`,
+v_main_note: "Basado en datos públicos de convenios ASSIST, solo de referencia. Verifica en los sitios oficiales. Los cursos 'sin verificar' pueden ser de GE — consulta la lista Cal-GETC antes de abandonarlos.",
+v_missing_partners: p => `Aún necesitas: ${p.list}`,
+v_satisfies: p => `Satisface ${p.target} ${p.code}`,
+v_and_incomplete: " (incompleto — se necesitan cursos complementarios)",
+v_denied_at: p => `Denegado por ${p.school}`,
+v_no_agreement_line: p => `Sin datos de convenio para: ${p.list}`,
+v_st_ok: "Transferible", v_st_denied: "Denegado", v_st_unknown: "Sin verificar",
 }
 };
 
@@ -364,6 +445,22 @@ function applyI18n() {
   });
   // 让各页面重渲染动态结果
   if (typeof window.__reRender === "function") window.__reRender();
+}
+
+/* 启动自检：检查必需 key 在三语中是否齐全，缺失则报错。
+ * 用法：i18n_check(["nav_validate", "btn_validate", ...]) → 返回缺失列表。
+ */
+function i18n_check(requiredKeys) {
+  const missing = [];
+  for (const l of Object.keys(I18N)) {
+    for (const k of requiredKeys || []) {
+      if (!(k in I18N[l])) missing.push(l + ":" + k);
+    }
+  }
+  if (missing.length && typeof console !== "undefined") {
+    console.error("[i18n] 缺失 key (" + missing.length + ")：" + missing.join(", "));
+  }
+  return missing;
 }
 
 function initLang() {
