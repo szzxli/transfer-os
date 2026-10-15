@@ -13,6 +13,9 @@ Python 实现。核心原则：**所有资格判定走规则引擎（YAML 规则
   - `POST /api/compare` + 对比页（`/compare`，Articulation 对比器）
   - `GET /api/compare-options` — 对比器可用的 CC/目标校/专业选项
 - `comparator/` — Articulation 对比器引擎（P1b）
+- `validator/` — 课程计划校验器引擎（P1c）
+  - `engine.py`：`validate_plan(cc_name, target_names, major_query, plan)`，
+    plan 为按学期分的课程表；输出逐学期逐门课审查 + 浪费汇总
   - `engine.py`：`compare(cc_name, major_query, target_names, student_courses)`，
     输出每所目标校的统一矩阵：covered/missing/no_articulation，
     附缺失清单、白修预警（denied）、转学后必修清单
@@ -42,6 +45,18 @@ uvicorn demo.app:app --reload --port 8000
 - `POST /api/tag-check` — TAG 资格检查
 - `GET /api/compare-options` — 对比器选项（CC → 目标校 → 专业）
 - `POST /api/compare` — 多校 articulation 对比
+- `POST /api/validate` — 课程计划校验（逐门课审查 + 学分浪费计数）
+
+校验请求示例：
+
+```json
+{
+  "cc_name": "Orange Coast College",
+  "major_query": "computer science",
+  "targets": ["UC Berkeley", "UC San Diego"],
+  "plan": {"Fall 2026": ["CS A250", "MATH A180"], "Spring 2027": ["CS A200"]}
+}
+```
 
 对比请求示例：
 

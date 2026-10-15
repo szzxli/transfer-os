@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>课程计划校验器演示</title>
+<style>
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 860px; margin: 0 auto; padding: 20px; background: #f6f7f9; color: #222; }
+  h1 { font-size: 22px; } h2 { font-size: 17px; margin: 14px 0 6px; }
+  .card { background: #fff; border-radius: 10px; padding: 16px; margin: 12px 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  label { display: block; margin: 8px 0 4px; font-size: 14px; color: #555; }
+  input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+  textarea { height: 110px; font-family: ui-monospace, monospace; }
+  button { background: #1a73e8; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 15px; cursor: pointer; margin-top: 10px; }
+  button:disabled { background: #aaa; }
+  .tgt { display: inline-block; margin: 4px 8px 4px 0; font-size: 14px; }
+  .tgt input { width: auto; margin-right: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  th, td { border: 1px solid #e0e0e0; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #f0f4f8; }
+  .st { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 10px; color: #fff; white-space: nowrap; }
+  .st.ok { background: #1a7f37; } .st.wasted { background: #c62828; }
+  .st.risk { background: #e6a23c; } .st.na { background: #909399; }
+  .summary { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+  .kpi { background: #f0f4f8; border-radius: 8px; padding: 10px 14px; min-width: 130px; }
+  .kpi .v { font-size: 24px; font-weight: 700; }
+  .kpi .v.bad { color: #c62828; } .kpi .v.warn { color: #b26a00; }
+  .kpi .l { font-size: 12px; color: #666; }
+  .warn { background: #fff8e6; border: 1px solid #f0d98c; border-radius: 6px; padding: 8px 12px; margin: 6px 0; font-size: 14px; }
+  .meta { font-size: 12px; color: #888; margin-top: 8px; }
+  .hint { font-size: 13px; color: #888; }
+  .nav { font-size: 14px; margin-bottom: 10px; }
+  .nav a { margin-right: 12px; }
+  code { background: #f0f0f0; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="/">TAG Guard</a><a href="/compare">对比器</a><strong>计划校验器</strong></div>
+<h1>📋 课程计划校验器 <span class="hint">（痛点 #2：选错课白修学分）</span></h1>
+
+<div class="card">
+  <label>社区大学</label>
+  <select id="cc"><option>加载中…</option></select>
+  <label>目标学校（可多选）</label>
+  <div id="targets"></div>
+  <label>专业查询词</label>
+  <input id="major" value="computer science" placeholder="如 computer science">
+  <label>课程计划（每学期一行，格式：<code>学期: 课程1, 课程2</code>）</label>
+  <textarea id="plan" placeholder="Fall 2026: CS A250, MATH A180&#10;Spring 2027: CS A200, ENGL A100"></textarea>
+  <button id="go" onclick="run()">审查课程计划</button>
+</div>
+
+<div id="result"></div>
+
+<script>
+let OPTS = null;
+async function init() {
+  const r = await fetch('/api/compare-options');
+  OPTS = await r.json();
+  const cc = document.getElementById('cc');
+  cc.innerHTML = OPTS.ccs.map(c => `<option>${c}</option>`).join('');
+  cc.onchange = renderTargets;
+  renderTargets();
+}
+function renderTargets() {
+  const cc = document.getElementById('cc').value;
+  const box = document.getElementById('targets');
+  const tgts = Object.keys(OPTS.by_cc[cc] || {});
+  box.innerHTML = tgts.map(t =>
+    `<label class="tgt"><input type="checkbox" value="${t}" checked>${t}</label>`
+  ).join('') || '<span class="hint">该 CC 暂无已抓取报告</span>';
+}
+function parsePlan(text) {
+  const plan = {};
+  for (const line of text.split('\n')) {
+    const m = line.match(/^\s*([^:：]+)\s*[:：]\s*(.+)$/);
+    if (!m) continue;
+    const courses = m[2].split(/[,，]/).map(s => s.trim()).filter(Boolean);
+    if (courses.length) plan[m[1].trim()] = courses;
+  }
+  return plan;
+}
+function courseBadge(v) {
+  if (v.denied) return '<span class="st wasted">白修实锤</span>';
+  if (v.transferable === true) return '<span class="st ok">可转</span>';
+  return '<span class="st risk">存疑</span>';
+}
+function esc(s){ return String(s??'').replace(/</g,'&lt;'); }
+async function run() {
+  const btn = document.getElementById('go');
+  btn.disabled = true; btn.textContent = '审查中…';
+  const targets = [...document.querySelectorAll('#targets input:checked')].map(i => i.value);
+  const plan = parsePlan(document.getElementById('plan').value);
+  const body = {cc_name: document.getElementById('cc').value,
+                major_query: document.getElementById('major').value,
+                targets, plan};
+  const r = await fetch('/api/validate', {method:'POST',
+    headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+  const d = await r.json();
+  btn.disabled = false; btn.textContent = '审查课程计划';
+  if (d.error) { document.getElementById('result').innerHTML = `<div class="warn">出错：${esc(d.error)}</div>`; return; }
+  render(d);
+}
+function render(d) {
+  const s = d.summary;
+  let h = `<div class="card"><h2>💸 浪费汇总</h2><div class="summary">
+    <div class="kpi"><div class="v ${s.wasted_units>0?'bad':''}">${s.wasted_units}</div><div class="l">实锤浪费学分</div></div>
+    <div class="kpi"><div class="v ${s.at_risk_courses.length?'warn':''}">${s.at_risk_courses.length}</div><div class="l">存疑课程（门）</div></div>
+    <div class="kpi"><div class="v">${s.extra_terms_estimate}</div><div class="l">≈ 多读学期</div></div>
+    <div class="kpi"><div class="v">${s.transferable_n}/${s.total_courses}</div><div class="l">可转课程</div></div>
+  </div>
+  <div class="meta">${esc(s.baseline_note)}。存疑课程可能是 GE 课，请对照 Cal-GETC 清单核实。</div>`;
+  if (s.wasted_courses.length)
+    h += `<div class="warn">🚨 白修实锤：${s.wasted_courses.map(c=>`<code>${esc(c)}</code>`).join(' ')} —— 被目标校明确拒绝承认，修了也白修。</div>`;
+  if (s.incomplete_requirements.length) {
+    h += `<div class="warn">🧩 未完成的要求：` + s.incomplete_requirements.map(i =>
+      `${esc(i.target_name)} <code>${esc(i.target_code)}</code> 还缺 ${i.missing_partners.map(c=>`<code>${esc(c)}</code>`).join('、')}`
+    ).join('<br>') + `</div>`;
+  }
+  h += `</div>`;
+  for (const t of d.terms) {
+    h += `<div class="card"><h2>${esc(t.term)}</h2><table>
+      <tr><th>课程</th><th>结论</th><th>满足的要求</th><th>说明</th></tr>`;
+    for (const c of t.courses) {
+      const sat = c.satisfies.map(x =>
+        `${esc(x.target_name)} <code>${esc(x.target_code)}</code>` +
+        (x.complete ? '' : ` <span class="hint">(还需 ${x.missing_partners.map(p=>`<code>${esc(p)}</code>`).join('、')})</span>`)
+      ).join('<br>') || '<span class="hint">—</span>';
+      h += `<tr><td><code>${esc(c.cc_code)}</code>${c.units!=null?` <span class="hint">${c.units}学分</span>`:''}</td>
+        <td>${courseBadge(c)}</td><td>${sat}</td><td class="hint">${esc(c.note)}</td></tr>`;
+    }
+    h += `</table></div>`;
+  }
+  if (d.no_agreement_targets && d.no_agreement_targets.length)
+    h += `<div class="warn">以下目标校无协议数据（未知，不判死）：${d.no_agreement_targets.map(esc).join('、')}</div>`;
+  h += `<div class="meta">${esc(d.note)}</div>`;
+  document.getElementById('result').innerHTML = h;
+}
+init();
+</script>
+</body>
+</html>

@@ -14,8 +14,9 @@ from pydantic import BaseModel, Field
 from tag_engine import check_eligibility, list_schools
 from comparator import compare as compare_articulation
 from comparator import list_options as compare_options
+from validator import validate_plan
 
-app = FastAPI(title="Transfer OS 演示", version="0.2.0")
+app = FastAPI(title="Transfer OS 演示", version="0.3.0")
 
 
 class Profile(BaseModel):
@@ -92,4 +93,36 @@ def api_compare(req: CompareRequest):
 @app.get("/compare", response_class=HTMLResponse)
 def compare_page():
     html_path = Path(__file__).parent / "static" / "compare.html"
+    return html_path.read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# 课程计划校验器（P1c）
+# ---------------------------------------------------------------------------
+
+class ValidateRequest(BaseModel):
+    """校验请求：CC + 目标校 + 专业查询词 + 按学期分的课程计划。"""
+    cc_name: str = Field(description="社区大学，如 Orange Coast College")
+    major_query: str = Field(default="computer science",
+                             description="专业查询词，如 computer science")
+    targets: list[str] = Field(default_factory=list,
+                               description="目标校列表，如 ['UC Berkeley']")
+    plan: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="按学期分的课程表，如 {'Fall 2026': ['CS A250', 'MATH A180']}")
+
+
+@app.post("/api/validate")
+def api_validate(req: ValidateRequest):
+    """课程计划校验：逐门课审查 + 学分浪费计数。纯规则匹配，不调用 LLM。"""
+    try:
+        return validate_plan(req.cc_name, req.targets,
+                             req.major_query, req.plan)
+    except Exception as e:  # noqa: BLE001 -- 演示服务，错误直接返回
+        return {"error": str(e)}
+
+
+@app.get("/validate", response_class=HTMLResponse)
+def validate_page():
+    html_path = Path(__file__).parent / "static" / "validate.html"
     return html_path.read_text(encoding="utf-8")
