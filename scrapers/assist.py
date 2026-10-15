@@ -11,8 +11,11 @@ Input:  one community college + one target university + one major (+ academic ye
 Output: parsed course mappings  CC course -> target course / requirement,
         saved as JSON under data/raw/.
 
-Current status: SKELETON. URL patterns and row shapes are documented from
-public sources (see ASSIST_NOTES.md). The report view is an Angular SPA, so
+Current status: P0 实测通过（2026-10-15）。JSON API 路径已跑通：
+  new_xsrf_session() -> list_agreements() -> fetch_agreement_json()
+  -> parse_agreement_json() -> data/raw/ 落 JSON。
+URL patterns and row shapes are documented from public sources
+(see ASSIST_NOTES.md). The report view is an Angular SPA, so
 plain requests.get() will NOT contain the rendered table; the fetch layer is
 written against the documented JSON API pattern with a graceful fallback, and
 a headless-browser path (Playwright) is marked as the P0 fallback if the API
@@ -49,10 +52,15 @@ ACADEMIC_YEARS = {
     "2026-2027": 77,  # inferred; assist.org homepage currently shows 2026-2027
 }
 
-# Sending-institution (CCC) IDs seen in public sources. Community-verified,
-# NOT official -- resolve_institution_id() should confirm these live.
-# (Source: public scraping notes, discovered 2026-04.)
+# Sending-institution (CCC) IDs -- VERIFIED live 2026-10-15 via
+# /api/institutions (see ASSIST_NOTES.md section 7).
 KNOWN_CCC_IDS = {
+    "De Anza College": 113,
+    "Santa Monica College": 137,
+    "Diablo Valley College": 114,
+    "Orange Coast College": 74,
+    "Pasadena City College": 49,
+    # Below: community records, not yet re-verified live.
     "Berkeley City College": 58,
     "College of Alameda": 111,
     "Laney College": 77,
@@ -60,15 +68,17 @@ KNOWN_CCC_IDS = {
     "College of San Mateo": 5,
     "Canada College": 68,
     "Skyline College": 127,
-    "Orange Coast College": 74,
     "Cypress College": 71,
     "Fullerton College": 134,
     "Golden West College": 55,
 }
 
-# Receiving-institution IDs seen in public URLs (verify at runtime).
+# Receiving-institution IDs -- VERIFIED live 2026-10-15 via /api/institutions.
 KNOWN_TARGET_IDS = {
-    "CSU Long Beach": 81,  # seen in a public CSULB agreement URL
+    "UC Berkeley": 79,
+    "UCLA": 117,
+    "UC San Diego": 7,
+    "CSU Long Beach": 81,  # community record, not yet re-verified
 }
 
 REQUEST_DELAY = 2.0  # seconds between requests -- be polite
@@ -348,6 +358,150 @@ def parse_api_payload(payload: dict, report: ArticulationReport) -> Articulation
             section=",".join(a.get("code", "") for a in item.get("transferAreas", [])),
         ))
     return report
+
+
+def _course_code(course: dict) -> str:
+    """'CS' + 'A250' -> 'CS A250' (defensive: fields may be missing)."""
+    return f"{(course.get('prefix') or '').strip()} {(course.get('courseNumber') or '').strip()}".strip()
+
+
+def parse_agreement_json(payload: dict,
+                         report: ArticulationReport) -> ArticulationReport:
+    """Parse the /api/articulation/Agreements JSON shape.
+
+    Verified live 2026-10-15 (Orange Coast -> UC Berkeley, Computer Science
+    B.A., 2026-2027). Shape:
+      result.articulations: JSON-encoded list of blocks; each block has
+        articulation.course (receiving course) and
+        articulation.sendingArticulation with:
+          items[]: course groups (courseConjunction And/Or, items[] courses)
+          courseGroupConjunctions[]: Or/And between groups
+          deniedCourses[]: explicitly denied sending courses
+          noArticulationReason: str when nothing articulates
+    """
+    result = payload.get("result", {}) or {}
+    report.agreement_type = result.get("type", "") or ""
+    pub = result.get("publishDate") or ""
+    report.published_date = pub[:10]
+    if payload.get("_source_url"):
+        report.source_url = payload["_source_url"]
+    articulations = result.get("articulations", [])
+    if isinstance(articulations, str):
+        articulations = json.loads(articulations)
+
+    for block in articulations:
+        art = block.get("articulation", {}) or {}
+        rc = art.get("course", {}) or {}
+        tcode = _course_code(rc) or None
+        ttitle = (rc.get("courseTitle") or "").strip() or None
+        tunits = str(rc.get("maxUnits") or "") or None
+        sa = art.get("sendingArticulation", {}) or {}
+        groups = sa.get("items") or []
+        denied = sa.get("deniedCourses") or []
+        noart_reason = sa.get("noArticulationReason")
+
+        # 1) explicitly denied sending courses
+        for dc in denied:
+            if isinstance(dc, dict):
+                code = _course_code(dc) or str(dc.get("id", "denied"))
+                title = (dc.get("courseTitle") or "").strip()
+                units = str(dc.get("maxUnits") or "")
+            else:
+                code, title, units = str(dc), "", ""
+            report.mappings.append(CourseMapping(
+                cc_code=code, cc_title=title, cc_units=units,
+                target_code=tcode, target_title=ttitle, target_units=tunits,
+                status="denied", section="deniedCourses"))
+
+        # 2) no articulation
+        if noart_reason and not groups and not denied:
+            report.mappings.append(CourseMapping(
+                cc_code="", cc_title="", cc_units="",
+                target_code=tcode, target_title=ttitle, target_units=tunits,
+                status="no_articulation",
+                section=f"noArticulationReason: {noart_reason[:80]}"))
+            continue
+
+        # 3) articulated groups (AND within group, group-level conjunctions
+        #    recorded in section)
+        group_conjs = sa.get("courseGroupConjunctions") or []
+        gconj_note = ""
+        if group_conjs:
+            parts = [f"{c.get('sendingCourseGroupBeginPosition')}-"
+                     f"{c.get('sendingCourseGroupEndPosition')}:"
+                     f"{c.get('groupConjunction')}" for c in group_conjs]
+            gconj_note = f" groupConjunctions[{';'.join(parts)}]"
+        for gi, grp in enumerate(groups):
+            conj = grp.get("courseConjunction", "And")
+            for course in grp.get("items") or []:
+                report.mappings.append(CourseMapping(
+                    cc_code=_course_code(course),
+                    cc_title=(course.get("courseTitle") or "").strip(),
+                    cc_units=str(course.get("maxUnits") or ""),
+                    target_code=tcode, target_title=ttitle, target_units=tunits,
+                    status="articulated",
+                    section=f"group_{gi}({conj}){gconj_note}"))
+    print(f"[parse] {len(report.mappings)} mappings from agreement JSON "
+          f"({sum(1 for m in report.mappings if m.status=='articulated')} articulated, "
+          f"{sum(1 for m in report.mappings if m.status=='no_articulation')} no_articulation, "
+          f"{sum(1 for m in report.mappings if m.status=='denied')} denied)",
+          file=sys.stderr)
+    return report
+
+
+def new_xsrf_session() -> requests.Session:
+    """Session primed for the ASSIST JSON API.
+
+    Verified 2026-10-15: the API returns 400 without the XSRF dance.
+    The site sets both XSRF-TOKEN and X-XSRF-TOKEN cookies; the API
+    expects the *X-XSRF-TOKEN cookie's* value back in the X-XSRF-TOKEN
+    header (sending the XSRF-TOKEN cookie's value instead -> 400).
+    """
+    session = requests.Session()
+    session.headers.update(HEADERS)
+    session.headers["Referer"] = BASE + "/"
+    resp = session.get(BASE + "/", timeout=TIMEOUT, verify=False)
+    resp.raise_for_status()
+    token = session.cookies.get("X-XSRF-TOKEN", "")
+    if not token:
+        raise RuntimeError("X-XSRF-TOKEN cookie not set by homepage; "
+                           "site may be blocking this client.")
+    session.headers["X-XSRF-TOKEN"] = token
+    return session
+
+
+def fetch_agreement_json(session: requests.Session, report_key: str) -> dict:
+    """Fetch one agreement's structured data via the SPA's own endpoint.
+
+    /api/articulation/Agreements?Key=<url-encoded key> where key comes from
+    /api/agreements (it doubles as the viewByKey in report page URLs).
+    Polite: single report per call; caller enforces REQUEST_DELAY.
+    """
+    from urllib.parse import quote
+    time.sleep(REQUEST_DELAY)
+    url = f"{BASE}/api/articulation/Agreements?Key={quote(report_key, safe='')}"
+    report_source_url = url  # for provenance
+    resp = session.get(url, timeout=60, verify=False)
+    resp.raise_for_status()
+    data = resp.json()
+    if not data.get("isSuccessful"):
+        raise RuntimeError(f"Agreement API returned isSuccessful=false "
+                           f"for key {report_key[:40]}...")
+    data["_source_url"] = report_source_url
+    return data
+
+
+def list_agreements(session: requests.Session, receiving_id: int,
+                    sending_id: int, academic_year_id: int,
+                    category_code: str = "major") -> dict:
+    """List available agreement reports (keys double as viewByKey)."""
+    time.sleep(REQUEST_DELAY)
+    url = (f"{BASE}/api/agreements?receivingInstitutionId={receiving_id}"
+           f"&sendingInstitutionId={sending_id}"
+           f"&academicYearId={academic_year_id}&categoryCode={category_code}")
+    resp = session.get(url, timeout=TIMEOUT, verify=False)
+    resp.raise_for_status()
+    return resp.json()
 
 
 # ----------------------------------------------------------------------------

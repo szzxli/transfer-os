@@ -95,3 +95,55 @@ Receiving：CSU Long Beach 81（公开 URL 验证）。
 2. 反查 5 所试点 CCC + 3 所目标校的 institution ID，写入 `KNOWN_CCC_IDS` 并标注验证日期
 3. 若 JSON 接口走不通，上 Playwright 无头渲染报告页（只渲染 P0 的 5×3×1=15 份报告，低频）
 4. 跑通后：`data/raw/` 落 JSON → 清洗进课程知识库 → 对比器原型
+
+## 七、实测结论（2026-10-15，verified_date: 2026-10-15）
+
+> 单份真实报告端到端跑通：Orange Coast College → UC Berkeley，Computer Science B.A.，2026-2027。
+> 原始 JSON 已落 `data/raw/assist_Orange_Coast_College_UC_Berkeley_Computer_Science_B_A_2026_2027.json`。
+
+### 7.1 关键发现：XSRF 认证绕行
+
+- `/api/*` 直接调返回 `400 {"title":"Bad Request","code":400}`（复现了社区记录的现象）。
+- 根因：站点是 ASP.NET + Angular，首页 Set-Cookie 下发 `XSRF-TOKEN` 和 `X-XSRF-TOKEN` 两个 cookie；**API 要求请求头 `X-XSRF-TOKEN` 携带的是 `X-XSRF-TOKEN` 这个 cookie 的值**——错拿 `XSRF-TOKEN` cookie 的值去填头同样 400。
+- 解法已固化为 `assist.py::new_xsrf_session()`：先 GET 首页拿 cookie，再带头调 API。全程 requests 即可，不需要 Playwright。
+
+### 7.2 已验证的接口链（全部 200）
+
+| 接口 | 参数 | 结论 |
+|---|---|---|
+| `GET /api/AcademicYears` | 无 | 77 = fallYear 2026（即 2026-2027 学年）✅；76=2025-2026、75=2024-2025 与此前推断一致 |
+| `GET /api/institutions` | 无 | 181 所学校；5 所试点 CCC 的 ID 全部反查确认 |
+| `GET /api/agreements` | receivingInstitutionId=79, sendingInstitutionId=74, academicYearId=77, categoryCode=major | 返回 95 份报告，每份的 `key` 即 viewByKey（格式 `77/74/to/79/Major/<uuid>`，uuid 由站点签发、不可猜） |
+| `GET /api/articulation/Agreements?Key=<urlencode(key)>` | 同源接口（注意不是旧文档里的 prod.assistng.org，那个已 401） | isSuccessful=true，66KB 完整报告 JSON |
+
+### 7.3 报告 JSON 数据模型（已解析验证）
+
+- `result.articulations`：JSON 字符串，解开后是 block 数组；每 block = `articulation.course`（目标校课程）+ `articulation.sendingArticulation`
+- `sendingArticulation.items[]`：课程组，组内 `courseConjunction`（And/Or），组间 `courseGroupConjunctions[]`（如两组之间 Or）
+- `noArticulationReason`：有值 = 不转（如 COMPSCI 70 "This course must be taken at the university after transfer"）
+- `deniedCourses[]`：明确拒绝的课程；本份报告中 0 条（字段存在已确认），解析器已用合成数据验证 denied 路径
+- 解析结果：12 mappings = 11 articulated + 1 no_articulation + 0 denied；`parse_agreement_json()` 已加入 `assist.py`
+
+### 7.4 试点学校 ID（/api/institutions 实测确认）
+
+| 学校 | ID | code |
+|---|---|---|
+| De Anza College | 113 | DAC |
+| Santa Monica College | 137 | SMCC |
+| Diablo Valley College | 114 | DIABLO |
+| Orange Coast College | 74 | OCC |
+| Pasadena City College | 49 | PASADENA |
+| UC Berkeley | 79 | UCB |
+| UCLA | 117 | UCLA |
+| UC San Diego | 7 | UCSD |
+
+### 7.5 listType 取值（transferability 接口用）
+
+从站点 JS 枚举确认：`prefix`、`csuai`、`calgetcArea`（另有 igetcArea 等，枚举未取全）。
+注意：articulation 报告流**不需要** listType，走 `/api/agreements` + `/api/articulation/Agreements` 即可。
+
+### 7.6 合规记录
+
+- 本次实测共约 15 个请求（含 2 次 400 试探、1 次 401 试探），间隔 ≥2.5 秒，仅 1 份报告，全程公开页面。
+- `prod.assistng.org` 旧接口已返回 401（加锁），未再试探。
+- 下一步批量抓取时保持：单进程、≥2 秒间隔、识别性 UA、只读公开报告页。
