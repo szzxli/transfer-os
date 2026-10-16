@@ -141,4 +141,6 @@ window.__reRender = function () {
   if (lastCmpResult) cmp_render(lastCmpResult);
 };
 
-document.addEventListener("DOMContentLoaded", cmp_init);
+document.addEventListener("DOMContentLoaded", function () {
+  (window.ARTIC_READY || Promise.resolve()).then(cmp_init);
+});

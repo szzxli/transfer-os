@@ -201,4 +201,6 @@ window.__reRender = function () {
   if (lastValResult) va_render(lastValResult);
 };
 
-document.addEventListener("DOMContentLoaded", va_init);
+document.addEventListener("DOMContentLoaded", function () {
+  (window.ARTIC_READY || Promise.resolve()).then(va_init);
+});

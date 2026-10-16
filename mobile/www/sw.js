@@ -1,5 +1,5 @@
 /* Transfer OS service worker — offline-first cache for the static app shell */
-const CACHE = 'transfer-os-v2';
+const CACHE = 'transfer-os-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -8,7 +8,9 @@ const ASSETS = [
   './manifest.json',
   './css/app.css',
   './js/i18n.js',
-  './js/artic-data.js',
+  './js/artic-gz-1.js',
+  './js/artic-gz-2.js',
+  './js/artic-boot.js',
   './js/tag-data.js',
   './js/tag-engine.js',
   './js/comparator.js',
