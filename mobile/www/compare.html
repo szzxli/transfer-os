@@ -44,6 +44,9 @@
     <label class="f"><span data-i18n="f_targets"></span> <span class="opt" data-i18n="f_targets_opt"></span></label>
     <div class="chips" id="targets"></div>
 
+    <label class="f" for="gpa"><span data-i18n="f_gpa"></span> <span class="opt" data-i18n="f_gpa_opt"></span></label>
+    <input id="gpa" type="number" step="0.01" min="0" max="5" data-i18n-ph="ph_gpa" autocomplete="off" inputmode="decimal">
+
     <label class="f" for="courses"><span data-i18n="f_courses"></span> <span class="opt" data-i18n="f_courses_opt"></span></label>
     <textarea id="courses" data-i18n-ph="ph_courses" oninput="cmp_countCourses()"></textarea>
     <div class="hint" id="courseCount"></div>
@@ -72,6 +75,7 @@
 <script src="js/artic-boot.js"></script>
 <script src="js/admit-gz-1.js"></script>
 <script src="js/admit-boot.js"></script>
+<script src="js/tagchance-data.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/comparator.js"></script>
 <script src="js/admit.js"></script>

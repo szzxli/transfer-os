@@ -255,6 +255,9 @@ textarea { min-height: 76px; resize: vertical; }
 .st.missing { background: var(--red); }
 .st.no_articulation { background: var(--amber); }
 .st.no_agreement { background: var(--gray); }
+.st.pass { background: var(--green); }
+.st.warn { background: var(--amber); }
+.st.fail { background: var(--red); }
 .req .via { font-size: 13px; color: var(--green); margin-top: 2px; }
 .req .opts { font-size: 13px; color: #4b5563; margin-top: 2px; }
 

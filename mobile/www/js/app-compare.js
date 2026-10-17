@@ -27,6 +27,7 @@ function cmp_init() {
   if (CMP_SAVED.cc_name) cc.value = CMP_SAVED.cc_name;
   if (CMP_SAVED.major_query) document.getElementById("major").value = CMP_SAVED.major_query;
   if (CMP_SAVED.courses) document.getElementById("courses").value = CMP_SAVED.courses;
+  if (CMP_SAVED.gpa) document.getElementById("gpa").value = CMP_SAVED.gpa;
   cmp_renderMajors();
   cmp_showStep(CMP_SAVED.major_query ? 2 : 1);
   applyI18n();
@@ -101,7 +102,7 @@ function cmp_run() {
     .split(/[\n,，;；]+/).map(s => s.trim()).filter(Boolean);
 
   try {
-    CMP_SAVED = { cc_name: ccName, major_query: majorQuery, targets, courses: courses.join("\n") };
+    CMP_SAVED = { cc_name: ccName, major_query: majorQuery, targets, courses: courses.join("\n"), gpa: document.getElementById("gpa").value.trim() };
     localStorage.setItem(LS_KEY, JSON.stringify(CMP_SAVED));
   } catch (e) { /* 忽略 */ }
 
@@ -157,23 +158,24 @@ function cmp_admitCompact(d, tt) {
   return Math.round(m.r * 100) + "%";
 }
 
-function cmp_summaryTable(d) {
-  const rows = d.targets.map(tt => {
+function cmp_summaryTable(d, chanceArr) {
+  const rows = d.targets.map((tt, i) => {
     if (tt.status === "no_agreement")
-      return `<tr><td><b>${cmp_escape(tt.target_name)}</b></td><td colspan="4" class="hint">${cmp_escape(t("st_no_agreement"))}</td></tr>`;
+      return `<tr><td><b>${cmp_escape(tt.target_name)}</b></td><td colspan="5" class="hint">${cmp_escape(t("st_no_agreement"))}</td></tr>`;
     const missing = (tt.items || []).filter(i => i.status === "missing").length;
     const wasted = (tt.wasted || []).length;
     return `<tr>
       <td><b>${cmp_escape(tt.target_name)}</b>${tt.academic_year ? `<div class="hint">${cmp_escape(tt.academic_year)}</div>` : ""}</td>
       <td class="num"><b>${tt.coverage_pct}%</b></td>
       <td class="num">${cmp_escape(cmp_admitCompact(d, tt))}</td>
+      <td class="num">${cmp_chanceCell(chanceArr[i])}</td>
       <td class="num">${missing}</td>
       <td class="num">${wasted ? "⚠️ " + wasted : "—"}</td>
     </tr>`;
   }).join("");
   return `<div class="card"><div class="section-title">${cmp_escape(t("sum_title"))}</div>
     <div class="tbl-wrap"><table class="sum-table">
-      <tr><th>${cmp_escape(t("sum_target"))}</th><th class="num">${cmp_escape(t("sum_coverage"))}</th><th class="num">${cmp_escape(t("sum_admit"))}</th><th class="num">${cmp_escape(t("sum_missing"))}</th><th class="num">${cmp_escape(t("sum_wasted"))}</th></tr>
+      <tr><th>${cmp_escape(t("sum_target"))}</th><th class=\"num\">${cmp_escape(t("sum_coverage"))}</th><th class="num">${cmp_escape(t("sum_admit"))}</th><th class="num">${cmp_escape(t("sum_chance"))}</th><th class="num">${cmp_escape(t("sum_missing"))}</th><th class="num">${cmp_escape(t("sum_wasted"))}</th></tr>
       ${rows}
     </table></div>
     <div class="hint">${cmp_escape(t("sum_tip"))}</div>
@@ -221,6 +223,107 @@ function cmp_actionPlan(d) {
     + `<div class="hint">${cmp_escape(t("plan_tip"))}</div>${body}</div>`;
 }
 
+function cmp_gpa() {
+  const el = document.getElementById("gpa");
+  const v = el ? parseFloat(el.value) : NaN;
+  return (v >= 0 && v <= 5) ? Math.round(v * 100) / 100 : null;
+}
+
+/* 录取概率档位：历史录取率 + GPA 对位(25th/75th) + impacted + 申请趋势(2024→2025)。
+ * 输出档位 3=高/2=中/1=低 + 依据列表；只做参考评估，不做录取保证。 */
+function cmp_chanceUcla(m, gpa) {
+  if (!m || m.r == null) return null;
+  let s = m.r >= 0.35 ? 3 : m.r >= 0.15 ? 2 : 1;
+  const factors = [t("ch_f_rate", { r: Math.round(m.r * 100) })];
+  if (gpa != null && m.g1 != null && m.g2 != null) {
+    if (gpa >= m.g2) { s += 1; factors.push(t("ch_f_gpa_high", { g: m.g2 })); }
+    else if (gpa < m.g1) { s -= 1; factors.push(t("ch_f_gpa_low", { g: m.g1 })); }
+    else factors.push(t("ch_f_gpa_mid"));
+  }
+  if (m.imp) {
+    factors.push(t("ch_f_impacted"));
+    if (!(gpa != null && m.g2 != null && gpa >= m.g2)) s -= 1;
+  }
+  if (m.a24 && m.a) {
+    const tr = (m.a - m.a24) / m.a24;
+    const pct = Math.round(tr * 100);
+    if (tr >= 0.2) { s -= 1; factors.push(t("ch_f_trend_up", { p: pct })); }
+    else if (tr <= -0.1) { s += 1; factors.push(t("ch_f_trend_down", { p: pct })); }
+    else factors.push(t("ch_f_trend_flat", { p: (pct >= 0 ? "+" : "") + pct }));
+  }
+  s = Math.max(1, Math.min(3, s));
+  return { band: s, factors: factors };
+}
+
+function cmp_bandChip(band) {
+  if (band === 3) return `<span class="st pass">${cmp_escape(t("ch_high"))}</span>`;
+  if (band === 2) return `<span class="st warn">${cmp_escape(t("ch_mid"))}</span>`;
+  if (band === 1) return `<span class="st fail">${cmp_escape(t("ch_low"))}</span>`;
+  return `<span class="st no_agreement">${cmp_escape(t("ch_na"))}</span>`;
+}
+
+/* 单个目标的概率评估：UCLA 有分专业官方数据；其他 UC 无分专业数据→诚实标注 */
+function cmp_chanceFor(tt, d, gpa) {
+  if (tt.status === "no_agreement") return null;
+  if (!/ucla/i.test(tt.target_name || "")) return { na: true };
+  const m = (typeof admit_findUcla === "function")
+    ? admit_findUcla(d.major_query || tt.major_label || "") : null;
+  if (!m) return { naMajor: true };
+  return cmp_chanceUcla(m, gpa);
+}
+
+function cmp_chanceCell(ch) {
+  if (!ch || ch.na || ch.naMajor) return `<span class="hint">—</span>`;
+  return cmp_bandChip(ch.band);
+}
+
+/* TAG 一致性：六校 TAG 的 GPA 门槛 vs 用户 GPA + 专业排除名单关键词核对 */
+function cmp_tagStrip(majorQuery, gpa) {
+  const campuses = (typeof TAG_CHANCE !== "undefined" && TAG_CHANCE.campuses) || [];
+  if (!campuses.length) return "";
+  const q = String(majorQuery || "").toLowerCase().trim();
+  const rows = campuses.map(c => {
+    const exclHit = q && (c.excluded || []).find(e => {
+      const el = String(e).toLowerCase();
+      return el.includes(q) || q.includes(el);
+    });
+    const glo = c.gpa[0], ghi = c.gpa[1];
+    const gpaTxt = glo === ghi ? String(glo) : `${glo}–${ghi}`;
+    let badge, note = "";
+    if (exclHit) {
+      badge = `<span class="st fail">${cmp_escape(t("tag_no"))}</span>`;
+      note = t("tag_excluded_note");
+    } else if (gpa != null && glo > 0) {
+      if (gpa >= ghi) badge = `<span class="st pass">✅</span>`;
+      else if (gpa >= glo) { badge = `<span class="st warn">⚠️</span>`; note = t("tag_partial_note"); }
+      else { badge = `<span class="st warn">⚠️</span>`; note = t("tag_below_note", { g: glo }); }
+    } else {
+      badge = `<span class="st no_agreement">—</span>`;
+    }
+    if (!exclHit && (c.excluded || []).length) note += (note ? " " : "") + t("tag_check_excl");
+    return `<div class="req"><span class="code">${cmp_escape(c.name)}</span> ${badge}`
+      + `<div class="hint">TAG GPA ${cmp_escape(gpaTxt)}${note ? " · " + cmp_escape(note) : ""}</div></div>`;
+  }).join("");
+  return `<div class="section-title">${cmp_escape(t("tag_strip_title"))}</div>`
+    + `<div class="hint">${cmp_escape(t("tag_strip_tip"))}</div>` + rows;
+}
+
+function cmp_chanceCard(d, chanceArr, gpa) {
+  const perTarget = d.targets.map((tt, i) => {
+    if (tt.status === "no_agreement") return "";
+    const ch = chanceArr[i];
+    const inner = (!ch || ch.na || ch.naMajor)
+      ? `<span class="st no_agreement">—</span><div class="hint">${cmp_escape(t(ch && ch.naMajor ? "ch_no_major" : "ch_no_data"))}</div>`
+      : `${cmp_bandChip(ch.band)}<div class="hint">${ch.factors.map(f => cmp_escape(f)).join(" · ")}</div>`;
+    return `<div class="req"><span class="code">${cmp_escape(tt.target_name)}</span> ${inner}</div>`;
+  }).join("");
+  return `<div class="card"><div class="section-title">${cmp_escape(t("chance_title"))}</div>`
+    + `<div class="hint">${cmp_escape(t("chance_tip"))}</div>`
+    + (gpa != null ? "" : `<div class="hint">💡 ${cmp_escape(t("chance_need_gpa"))}</div>`)
+    + perTarget + cmp_tagStrip(d.major_query, gpa)
+    + `<div class="hint">${cmp_escape(t("chance_disc"))}</div></div>`;
+}
+
 function cmp_toggle(i) {
   const card = document.getElementById("cmpcard" + i);
   if (!card) return;
@@ -234,7 +337,9 @@ function cmp_toggle(i) {
 function cmp_render(d) {
   const box = document.getElementById("result");
   const newestYear = d.targets.map(x => x.academic_year).filter(Boolean).sort().reverse()[0] || "";
-  let html = cmp_summaryTable(d) + cmp_actionPlan(d);
+  const gpa = cmp_gpa();
+  const chanceArr = d.targets.map(tt => cmp_chanceFor(tt, d, gpa));
+  let html = cmp_summaryTable(d, chanceArr) + cmp_actionPlan(d) + cmp_chanceCard(d, chanceArr, gpa);
   let idx = 0;
   for (const tt of d.targets) {
     if (tt.status === "no_agreement") {
