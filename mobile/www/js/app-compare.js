@@ -100,7 +100,7 @@ function cmp_render(d) {
       if (i.status === "covered" && i.via.length)
         extra = `<div class="via">${cmp_escape(t("d_via", { via: i.via.join(" + ") }))}</div>`;
       else if (i.status === "missing" && i.options.length)
-        extra = `<div class="opts">${cmp_escape(t("d_fill_one", { options: i.options.join(" / ") }))}</div>`;
+        extra = `<div class="opts">${cmp_escape(t("d_fill", { options: i.options_display || i.options.join(" / ") }))}</div>`;
       else if (i.status === "no_articulation")
         extra = `<div class="opts">${cmp_escape(i.detail)}</div>`;
       return `<div class="req">
@@ -121,7 +121,7 @@ function cmp_render(d) {
     html += `<div class="card">
       <div class="cov-head">
         <div><h3 style="margin:0">${cmp_escape(tt.target_name)}</h3>
-        <div class="hint">${cmp_escape(tt.major_label || "")}${tt.academic_year ? " · " + cmp_escape(tt.academic_year) : ""}</div></div>
+        <div class="hint">${cmp_escape(d.cc_name || "")} → ${cmp_escape(tt.major_label || "")}${tt.academic_year ? " · " + cmp_escape(tt.academic_year) : ""}</div></div>
         <div class="cov-num">${tt.coverage_pct}<span style="font-size:14px;color:#888">%</span></div>
       </div>
       <div class="cov-bar"><div style="width:${tt.coverage_pct}%"></div></div>

@@ -224,10 +224,17 @@ def _check_english_math(requirements: dict, profile: dict) -> list[dict]:
 # 专业排除 / 学士学位 / 其他
 # ---------------------------------------------------------------------------
 def _iter_excluded_keys(requirements: dict):
-    """收集所有 excluded_majors* 键的值（Irvine 有 fall_2027 / fall_2028 两个版本）。"""
+    """收集 excluded_majors* 键，拆分为当前周期 / 未来周期。
+
+    带 _additions 后缀的是未来周期（如 fall_2028）的新增排除名单，
+    只做前瞻提示，不在当前周期执行。
+    """
+    current, future = [], []
     for key, val in requirements.items():
-        if key.startswith("excluded_majors"):
-            yield key, val
+        if not key.startswith("excluded_majors"):
+            continue
+        (future if key.lower().endswith("additions") else current).append((key, val))
+    return {"current": current, "future": future}
 
 
 def _check_excluded_majors(requirements: dict, profile: dict):
@@ -235,7 +242,8 @@ def _check_excluded_majors(requirements: dict, profile: dict):
     major_n = _norm(profile.get("major"))
     college_n = _norm(profile.get("college"))
     found_unknown = False
-    for key, val in _iter_excluded_keys(requirements):
+    keys = _iter_excluded_keys(requirements)
+    for key, val in keys["current"]:
         if _is_unknown(val) or val is None:
             found_unknown = True
             continue
@@ -259,17 +267,32 @@ def _check_excluded_majors(requirements: dict, profile: dict):
             if major_n and (major_n in en or en in major_n):
                 return (
                     _make_check("excluded_major", "专业可 TAG", FAIL,
-                                f"专业 [{entry}] 不可 TAG（规则键：{key}）。"),
+                                f"专业 [{entry}] 不可 TAG。"),
                     None,
                 )
+    future_notes = []
+    for key, val in keys["future"]:
+        entries = val if isinstance(val, list) else [val]
+        for entry in entries:
+            if not isinstance(entry, str):
+                continue
+            en = _norm(entry)
+            if major_n and (major_n in en or en in major_n):
+                future_notes.append(entry)
+    future_note = ("注意：未来周期新增排除名单含 [%s]，若延迟申请请重新核实。"
+                   % "；".join(future_notes)) if future_notes else None
     if found_unknown:
+        risk = "该校不可 TAG 专业名单尚未核实，提交前请到官网确认你的专业可否 TAG。"
+        if future_note:
+            risk += " " + future_note
         return (
             _make_check("excluded_major", "专业可 TAG", SKIP, "该校不可 TAG 专业名单未核实，请查官网。"),
-            "该校不可 TAG 专业名单尚未核实，提交前请到官网确认你的专业可否 TAG。",
+            risk,
         )
     if not major_n:
-        return _make_check("excluded_major", "专业可 TAG", WARN, "未提供目标专业，无法检查排除名单。"), None
-    return _make_check("excluded_major", "专业可 TAG", PASS, "目标专业不在不可 TAG 名单中。"), None
+        return _make_check("excluded_major", "专业可 TAG", WARN, "未提供目标专业，无法检查排除名单。"), future_note
+    detail = "目标专业不在不可 TAG 名单中。" + ((" " + future_note) if future_note else "")
+    return _make_check("excluded_major", "专业可 TAG", PASS, detail), None
 
 
 def _check_bachelor(requirements: dict, profile: dict):

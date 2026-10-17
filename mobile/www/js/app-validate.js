@@ -68,21 +68,29 @@ function va_renderTargets() {
  *   Fall 2026:
  *   CS A250
  *   MATH A180
- * （空行分隔学期；以冒号结尾的行是学期标题）
+ * （空行分隔学期；以冒号结尾的行是学期标题；"Fall 2026" 这类裸行也认，
+ *   全文无标题时并入默认学期——不静默吞掉用户输入）
  */
+const VA_TERM_RE = /^(?:(fall|winter|spring|summer)\s+\d{4}|\d{4}\s+(fall|winter|spring|summer))$/i;
+
 function va_parsePlan(text) {
   const plan = {};
-  let cur = null;
+  const loose = [];
+  let cur = null, seenTerm = false;
   for (const raw of String(text || "").split(/\r?\n/)) {
     const line = raw.trim();
     if (!line) { cur = null; continue; }
-    if (/:$/.test(line)) {
+    if (/:$/.test(line) || VA_TERM_RE.test(line)) {
       cur = line.replace(/:$/, "").trim() || line;
       if (!plan[cur]) plan[cur] = [];
+      seenTerm = true;
     } else if (cur) {
       plan[cur].push(line);
+    } else {
+      loose.push(line);
     }
   }
+  if (!seenTerm && loose.length) plan[t("v_default_term")] = loose;
   return plan;
 }
 

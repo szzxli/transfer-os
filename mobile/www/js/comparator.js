@@ -130,15 +130,21 @@ function cp_compareOne(report, have) {
     const satisfiedVia = [];
     let covered = false;
     const options = [];
+    const optionGroups = [];
     for (const gi of Object.keys(byGroup).map(Number).sort((a, b) => a - b)) {
       const g = byGroup[gi];
-      const codes = g.codes.filter(Boolean);
+      const codes = [...new Set(g.codes.filter(Boolean))].sort();
+      if (!codes.length) continue;
       options.push(...codes);
-      if (g.conj.toLowerCase() === "or") {
+      /* And 组内是"都要修"，Or 组内是"任选其一"——显示必须区分，
+       * 否则 "A / B" 会误导用户以为任选其一即可 */
+      const conj = (g.conj || "And").toLowerCase();
+      optionGroups.push(conj === "or" ? codes.join(" / ") : codes.join(" + "));
+      if (conj === "or") {
         const hit = codes.filter(c => have.has(c));
         if (hit.length) { covered = true; satisfiedVia.push(...hit); }
       } else { // And：组内课程要全修
-        if (codes.length && codes.every(c => have.has(c))) {
+        if (codes.every(c => have.has(c))) {
           covered = true; satisfiedVia.push(...codes);
         }
       }
@@ -150,8 +156,9 @@ function cp_compareOne(report, have) {
       status: covered ? "covered" : "missing",
       via: [...new Set(satisfiedVia)].sort(),
       options: [...new Set(options)].sort(),
+      options_display: optionGroups.join(t("d_opt_sep")),
       detail: covered ? t("d_covered")
-        : t("d_missing", { options: [...new Set(options)].sort().join(", ") }),
+        : t("d_missing", { options: optionGroups.join(t("d_opt_sep")) }),
     });
   }
 

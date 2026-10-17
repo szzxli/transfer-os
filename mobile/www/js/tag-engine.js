@@ -27,8 +27,11 @@ function te_makeCheck(id, label, status, detail) {
 }
 
 function te_gfmt(x) {
-  // 对应 Python f"{x:g}"
-  return Number.isInteger(x) ? String(x) : String(x);
+  // 对应 Python f"{x:g}"：去掉浮点 artifact（如 3.5999999046325684 → 3.6）
+  if (x === null || x === undefined) return "";
+  const n = Number(x);
+  if (!isFinite(n)) return String(x);
+  return String(Math.round(n * 1e6) / 1e6);
 }
 
 /* ---------------- 学校 ---------------- */
@@ -137,8 +140,8 @@ function te_checkGpa(requirements, profile) {
   if (!isFinite(gpaF))
     return te_makeCheck("gpa", L, TE_WARN, t("d_gpa_warn_badfmt", { matched, threshold }));
   if (gpaF >= threshold)
-    return te_makeCheck("gpa", L, TE_PASS, t("d_gpa_pass", { gpa: gpaF, threshold, matched }));
-  return te_makeCheck("gpa", L, TE_FAIL, t("d_gpa_fail", { gpa: gpaF, threshold, matched }));
+    return te_makeCheck("gpa", L, TE_PASS, t("d_gpa_pass", { gpa: te_gfmt(gpaF), threshold: te_gfmt(threshold), matched }));
+  return te_makeCheck("gpa", L, TE_FAIL, t("d_gpa_fail", { gpa: te_gfmt(gpaF), threshold: te_gfmt(threshold), matched }));
 }
 
 /* ---------------- 学分 ---------------- */
@@ -212,19 +215,24 @@ function te_checkEnglishMath(requirements, profile) {
 
 /* ---------------- 专业排除 / 学士学位 / 其他 ---------------- */
 function te_excludedKeys(requirements) {
-  const out = [];
+  const current = [], future = [];
   for (const key of Object.keys(requirements)) {
-    if (key.startsWith("excluded_majors")) out.push([key, requirements[key]]);
+    if (!key.startsWith("excluded_majors")) continue;
+    /* 带 _additions 后缀的是未来周期（如 fall_2028）的新增排除名单，
+     * 只做前瞻提示，不在当前周期执行——否则会把明年才排除的专业误判 */
+    if (/additions$/i.test(key)) future.push([key, requirements[key]]);
+    else current.push([key, requirements[key]]);
   }
-  return out;
+  return { current, future };
 }
 
 function te_checkExcludedMajors(requirements, profile) {
   const L = t("label_excluded");
   const majorN = te_norm(profile.major);
   const collegeN = te_norm(profile.college);
+  const keys = te_excludedKeys(requirements);
   let foundUnknown = false;
-  for (const [key, val] of te_excludedKeys(requirements)) {
+  for (const [key, val] of keys.current) {
     if (val === null || val === undefined || te_isUnknown(val)) { foundUnknown = true; continue; }
     const entries = Array.isArray(val) ? val : [val];
     for (const entry of entries) {
@@ -241,16 +249,33 @@ function te_checkExcludedMajors(requirements, profile) {
       }
       if (majorN && (majorN.includes(en) || en.includes(majorN))) {
         return [te_makeCheck("excluded_major", L, TE_FAIL,
-          t("d_excl_fail", { entry, key })), null];
+          t("d_excl_fail", { entry })), null];
       }
     }
   }
+  /* 未来周期的新增排除：只提示，不判死 */
+  const futureNotes = [];
+  for (const [key, val] of keys.future) {
+    const entries = Array.isArray(val) ? val : [val];
+    for (const entry of entries) {
+      if (typeof entry !== "string") continue;
+      if (entry.trim().toLowerCase().startsWith("note:")) continue;
+      const en = te_norm(entry);
+      if (majorN && (majorN.includes(en) || en.includes(majorN))) {
+        futureNotes.push(entry);
+      }
+    }
+  }
+  const futureNote = futureNotes.length ? t("d_excl_future_note", { list: futureNotes.join("；") }) : null;
   if (foundUnknown)
-    return [te_makeCheck("excluded_major", L, TE_SKIP, t("d_excl_skip")),
-      t("d_excl_risk_unknown")];
+    return [te_makeCheck("excluded_major", L, TE_SKIP, t("d_excl_skip")), 
+      [t("d_excl_risk_unknown"), futureNote].filter(Boolean).join(" ") || null];
   if (!majorN)
-    return [te_makeCheck("excluded_major", L, TE_WARN, t("d_excl_warn_nomajor")), null];
-  return [te_makeCheck("excluded_major", L, TE_PASS, t("d_excl_pass")), null];
+    return [te_makeCheck("excluded_major", L, TE_WARN, t("d_excl_warn_nomajor")), futureNote];
+  const passDetail = futureNote
+    ? t("d_excl_pass") + " " + futureNote
+    : t("d_excl_pass");
+  return [te_makeCheck("excluded_major", L, TE_PASS, passDetail), null];
 }
 
 function te_checkBachelor(requirements, profile) {
