@@ -1,5 +1,5 @@
 /* Transfer OS service worker — offline-first cache for the static app shell */
-const CACHE = 'transfer-os-v3';
+const CACHE = 'transfer-os-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -37,6 +37,6 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || fetch(e.request))
+    caches.match(e.request).then((hit) => hit || fetch(e.request))
   );
 });
