@@ -1,8 +1,9 @@
 /* Transfer OS service worker — offline-first cache for the static app shell */
-const CACHE = 'transfer-os-v23';
+const CACHE = 'transfer-os-v24';
 const ASSETS = [
   './',
   './index.html',
+  './tag.html',
   './compare.html',
   './validate.html',
   './manifest.json',

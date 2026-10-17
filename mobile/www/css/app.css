@@ -258,6 +258,13 @@ textarea { min-height: 76px; resize: vertical; }
 }
 .faq-list div { padding: 8px 0; line-height: 1.6; border-bottom: 1px solid #eee; }
 .faq-list div:last-child { border-bottom: none; }
+/* 首页 */
+.hero-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+.tool-card { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+.tool-ico { font-size: 28px; flex: none; }
+.tool-tx { flex: 1; min-width: 0; }
+.tool-t { font-weight: 800; font-size: 16px; margin-bottom: 2px; }
+.tool-go { font-size: 24px; color: var(--brand1); flex: none; }
 
 /* ---------- 加载 / 错误 / 空态 ---------- */
 .loading { text-align: center; padding: 28px 0; color: var(--muted); }
