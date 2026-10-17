@@ -15,7 +15,7 @@ const VA_KEYS = [
   "v_unknown_units", "v_term_wasted",
   "v_note_ok", "v_note_ok_partial", "v_note_denied", "v_note_unknown",
   "v_denied_noname", "v_baseline_note", "v_main_note",
-  "v_missing_partners", "v_satisfies", "v_and_incomplete",
+  "v_missing_partners", "v_satisfies", "v_partial_satisfies", "v_and_incomplete",
   "v_denied_at", "v_no_agreement_line",
   "v_st_ok", "v_st_denied", "v_st_unknown",
 ];
@@ -216,10 +216,9 @@ function va_render(d) {
   for (const term of d.terms) {
     const rows = term.courses.map(v => {
       const sat = (v.satisfies || []).map(x =>
-        `<div class="via">✓ ${va_escape(t("v_satisfies", { target: x.target_name, code: x.target_code }))}` +
-        (x.complete ? "" : va_escape(t("v_and_incomplete")) + " " +
-          va_escape(t("v_missing_partners", { list: x.missing_partners.join(" / ") }))) +
-        `</div>`
+        x.complete
+          ? `<div class="via">✓ ${va_escape(t("v_satisfies", { target: x.target_name, code: x.target_code }))}</div>`
+          : `<div class="via">◐ ${va_escape(t("v_partial_satisfies", { target: x.target_name, code: x.target_code }))} — ${va_escape(t("v_missing_partners", { list: x.missing_partners.join(" / ") }))}</div>`
       ).join("");
       const deniedAt = (v.denied_at || []).map(x =>
         `<div class="risk">⛔ ${va_escape(t("v_denied_at", { school: x.target_name }))} — ${va_escape(x.note)}</div>`
