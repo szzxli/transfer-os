@@ -253,20 +253,25 @@ function te_checkExcludedMajors(requirements, profile) {
       }
     }
   }
-  /* 未来周期的新增排除：只提示，不判死 */
+  /* 未来周期的新增排除：只提示，不判死（周期从 key 名解析，如 fall_2028 → Fall 2028） */
   const futureNotes = [];
   for (const [key, val] of keys.future) {
+    const cycle = key.replace(/^excluded_majors_/i, "").replace(/_additions$/i, "")
+      .split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
     const entries = Array.isArray(val) ? val : [val];
     for (const entry of entries) {
       if (typeof entry !== "string") continue;
       if (entry.trim().toLowerCase().startsWith("note:")) continue;
       const en = te_norm(entry);
       if (majorN && (majorN.includes(en) || en.includes(majorN))) {
-        futureNotes.push(entry);
+        futureNotes.push({ cycle, entry });
       }
     }
   }
-  const futureNote = futureNotes.length ? t("d_excl_future_note", { list: futureNotes.join("；") }) : null;
+  const futureNote = futureNotes.length ? t("d_excl_future_note", {
+    cycle: [...new Set(futureNotes.map(n => n.cycle))].join(" / "),
+    list: futureNotes.map(n => n.entry).join("；"),
+  }) : null;
   if (foundUnknown)
     return [te_makeCheck("excluded_major", L, TE_SKIP, t("d_excl_skip")), 
       [t("d_excl_risk_unknown"), futureNote].filter(Boolean).join(" ") || null];

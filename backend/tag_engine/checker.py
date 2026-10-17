@@ -272,15 +272,21 @@ def _check_excluded_majors(requirements: dict, profile: dict):
                 )
     future_notes = []
     for key, val in keys["future"]:
+        cycle = re.sub(r"^excluded_majors_", "", key, flags=re.I)
+        cycle = re.sub(r"_additions$", "", cycle, flags=re.I)
+        cycle = " ".join(w.capitalize() for w in cycle.split("_"))  # fall_2028 -> Fall 2028
         entries = val if isinstance(val, list) else [val]
         for entry in entries:
             if not isinstance(entry, str):
                 continue
             en = _norm(entry)
             if major_n and (major_n in en or en in major_n):
-                future_notes.append(entry)
-    future_note = ("注意：未来周期新增排除名单含 [%s]，若延迟申请请重新核实。"
-                   % "；".join(future_notes)) if future_notes else None
+                future_notes.append((cycle, entry))
+    future_note = None
+    if future_notes:
+        cycles = " / ".join(sorted({c for c, _ in future_notes}))
+        future_note = ("注意：%s 周期起，新增排除名单含 [%s]，若延迟申请请重新核实。"
+                       % (cycles, "；".join(e for _, e in future_notes)))
     if found_unknown:
         risk = "该校不可 TAG 专业名单尚未核实，提交前请到官网确认你的专业可否 TAG。"
         if future_note:
