@@ -774,11 +774,14 @@ function cmp_render(d) {
       : "";
     const yearNote = (tt.academic_year && newestYear && tt.academic_year < newestYear)
       ? `<div class="risk">${cmp_escape(t("old_year_note", { y: tt.academic_year, n: newestYear }))}</div>` : "";
+    const freshBadge = tt.academic_year
+      ? `<span class="fresh-badge">${cmp_escape(t("fresh_badge", { y: tt.academic_year, d: (typeof ARTIC_META !== "undefined" && ARTIC_META.fetched) || "?" }))}</span>`
+      : "";
 
     html += `<div class="card" id="cmpcard${my}">
       <div class="cmp-head" onclick="cmp_toggle(${my})">
         <div><h3 style="margin:0">${cmp_escape(tt.target_name)}</h3>
-        <div class="hint">${cmp_escape(d.cc_name || "")} → ${cmp_escape(tt.major_label || "")}${tt.academic_year ? " · " + cmp_escape(tt.academic_year) : ""}</div></div>
+        <div class="hint">${cmp_escape(d.cc_name || "")} → ${cmp_escape(tt.major_label || "")} ${freshBadge}</div></div>
         <div class="cov-num">${tt.coverage_pct}<span style="font-size:14px;color:#888">%</span></div>
         <span class="exp-toggle">${cmp_escape(t("expand_detail"))}</span>
       </div>
