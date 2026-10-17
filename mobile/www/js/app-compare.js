@@ -52,12 +52,45 @@ function cmp_loadPlan(id) {
     CMP_SAVED = Object.assign(CMP_SAVED || {}, { cc_name: d.cc_name, major_query: d.major_query, courses: d.courses, gpa: d.gpa, targets: d.targets });
   } catch (e) { /* 忽略 */ }
   cmp_renderMajors();
+  cmp_buildCourseIndex();
   cmp_showStep(d.major_query ? 2 : 1);
   cmp_countCourses();
 }
 function cmp_delPlan(id) {
   cmp_setPlans(cmp_getPlans().filter(x => x.id !== id));
   cmp_renderPlans();
+}
+/* 方案对比：存档方案 vs 当前表单，diff 课程增减 + 表单字段变化 */
+function cmp_diffPlan(id) {
+  const p = cmp_getPlans().find(x => x.id === id);
+  if (!p) return;
+  const cur = cmp_planData(), old = p.data || {};
+  const splitC = s => String(s || "").split(/[\n,，;；]+/).map(x => x.trim()).filter(Boolean);
+  const key = s => s.toUpperCase().replace(/\s+/g, " ");
+  const curC = splitC(cur.courses), oldC = splitC(old.courses);
+  const curSet = new Set(curC.map(key)), oldSet = new Set(oldC.map(key));
+  const added = curC.filter(c => !oldSet.has(key(c)));
+  const removed = oldC.filter(c => !curSet.has(key(c)));
+  const meta = [];
+  const fld = (label, a, b) => {
+    a = String(a == null ? "" : a).trim(); b = String(b == null ? "" : b).trim();
+    if (a !== b) meta.push(t("diff_change", { f: label, a: a || "—", b: b || "—" }));
+  };
+  fld(t("f_cc"), old.cc_name, cur.cc_name);
+  fld(t("f_major2"), old.major_query, cur.major_query);
+  fld(t("f_targets"), (old.targets || []).join("、"), (cur.targets || []).join("、"));
+  fld(t("f_gpa"), old.gpa, cur.gpa);
+  let html = `<div class="card"><div class="section-title">${cmp_escape(t("diff_title", { name: p.name }))}</div>`;
+  if (meta.length) html += meta.map(m => `<div class="req"><div class="hint">${cmp_escape(m)}</div></div>`).join("");
+  html += `<div class="hint" style="margin-top:6px">${cmp_escape(t("diff_course_sec"))}</div>`;
+  const cl = [];
+  if (added.length) cl.push(`<div class="diff-add">+ ${cmp_escape(added.join("、"))}</div>`);
+  if (removed.length) cl.push(`<div class="diff-del">− ${cmp_escape(removed.join("、"))}</div>`);
+  html += cl.join("") || `<div class="hint">${cmp_escape(t("diff_same"))}</div>`;
+  html += `</div>`;
+  const box = document.getElementById("planDiff");
+  box.innerHTML = html;
+  box.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 function cmp_renderPlans() {
   const box = document.getElementById("planList");
@@ -67,6 +100,7 @@ function cmp_renderPlans() {
     `<div class="plan-item"><div><div class="plan-name">${cmp_escape(p.name)}</div>`
     + `<div class="hint">${cmp_escape(new Date(p.ts).toLocaleDateString())} · ${cmp_escape((p.data && p.data.major_query) || "")}</div></div>`
     + `<div class="plan-ops"><button type="button" class="linkbtn" onclick="cmp_loadPlan(${p.id})">${cmp_escape(t("plan_load"))}</button>`
+    + `<button type="button" class="linkbtn" onclick="cmp_diffPlan(${p.id})">${cmp_escape(t("plan_diff"))}</button>`
     + `<button type="button" class="linkbtn danger" onclick="cmp_delPlan(${p.id})">${cmp_escape(t("plan_del"))}</button></div></div>`
   ).join("") || `<div class="hint">${cmp_escape(t("plans_empty"))}</div>`;
 }
@@ -78,6 +112,7 @@ function cmp_init() {
   cc.innerHTML = CMP_OPTS.ccs.map(c => `<option>${cmp_escape(c)}</option>`).join("");
   cc.onchange = function () {
     cmp_renderMajors();
+    cmp_buildCourseIndex();
     if (!document.getElementById("step2").hidden) cmp_renderTargets();
   };
   try {
@@ -98,6 +133,7 @@ function cmp_init() {
   if (CMP_SAVED.courses) document.getElementById("courses").value = CMP_SAVED.courses;
   if (CMP_SAVED.gpa) document.getElementById("gpa").value = CMP_SAVED.gpa;
   cmp_renderMajors();
+  cmp_buildCourseIndex();
   cmp_renderPlans();
   cmp_showStep(CMP_SAVED.major_query ? 2 : 1);
   applyI18n();
@@ -188,6 +224,82 @@ function cmp_suggestKey(e) {
 
 function cmp_suggestHide() {
   setTimeout(() => { document.getElementById("majorSugg").hidden = true; }, 150);
+}
+
+/* 按课程名找课：从 articulation 报告里建本校课程 {code, title} 索引，
+ * 大一新生不用背课程代码，搜 "accounting" 也能找到 ACCT 1B */
+let CMP_COURSES = [];
+const CMP_COURSE_CACHE = {};
+function cmp_buildCourseIndex() {
+  const cc = document.getElementById("cc").value;
+  if (CMP_COURSE_CACHE[cc]) { CMP_COURSES = CMP_COURSE_CACHE[cc]; return; }
+  const seen = new Map();
+  for (const r of cp_loadReports()) {
+    if (r.cc_name !== cc) continue;
+    for (const m of (r.mappings || [])) {
+      if (m.cc_code && !seen.has(m.cc_code)) seen.set(m.cc_code, m.cc_title || "");
+    }
+  }
+  CMP_COURSES = [...seen.entries()]
+    .map(([code, title]) => ({ code, title }))
+    .sort((a, b) => a.code < b.code ? -1 : 1);
+  CMP_COURSE_CACHE[cc] = CMP_COURSES;
+}
+let CMP_COURSE_LIST = [], CMP_COURSE_IDX = -1;
+function cmp_courseSearch() {
+  const inp = document.getElementById("courseSearch");
+  const box = document.getElementById("courseSugg");
+  const q = inp.value.trim().toLowerCase();
+  CMP_COURSE_LIST = q ? CMP_COURSES.filter(c =>
+    c.code.toLowerCase().includes(q) || (c.title || "").toLowerCase().includes(q)).slice(0, 8) : [];
+  CMP_COURSE_IDX = -1;
+  if (!CMP_COURSE_LIST.length) { box.hidden = true; return; }
+  box.innerHTML = CMP_COURSE_LIST.map((c, i) =>
+    `<div class="sugg-item" data-i="${i}"><b>${cmp_escape(c.code)}</b>`
+    + (c.title ? ` <span class="hint">— ${cmp_escape(c.title)}</span>` : "") + `</div>`).join("");
+  box.hidden = false;
+  box.querySelectorAll(".sugg-item").forEach(el => {
+    el.addEventListener("mousedown", e => {
+      e.preventDefault();
+      cmp_addCourse(CMP_COURSE_LIST[+el.dataset.i].code);
+      inp.focus();
+    });
+  });
+}
+function cmp_courseSearchPaint() {
+  document.querySelectorAll("#courseSugg .sugg-item").forEach((el, i) =>
+    el.classList.toggle("active", i === CMP_COURSE_IDX));
+}
+function cmp_courseSearchKey(e) {
+  const box = document.getElementById("courseSugg");
+  if (box.hidden) return;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    CMP_COURSE_IDX = e.key === "ArrowDown"
+      ? Math.min(CMP_COURSE_IDX + 1, CMP_COURSE_LIST.length - 1)
+      : Math.max(CMP_COURSE_IDX - 1, 0);
+    cmp_courseSearchPaint();
+  } else if (e.key === "Enter" && CMP_COURSE_IDX >= 0) {
+    e.preventDefault();
+    cmp_addCourse(CMP_COURSE_LIST[CMP_COURSE_IDX].code);
+  } else if (e.key === "Escape") {
+    box.hidden = true;
+  }
+}
+function cmp_courseSearchHide() {
+  setTimeout(() => { document.getElementById("courseSugg").hidden = true; }, 150);
+}
+/* 搜到的课一键加入课程框（去重） */
+function cmp_addCourse(code) {
+  const ta = document.getElementById("courses");
+  const cur = ta.value.split(/[\n,，;；]+/).map(s => s.trim()).filter(Boolean);
+  const k = code.toUpperCase().replace(/\s+/g, " ");
+  if (!cur.some(c => c.toUpperCase().replace(/\s+/g, " ") === k)) {
+    ta.value = (ta.value.trim() ? ta.value.trim() + "\n" : "") + code;
+    cmp_countCourses();
+  }
+  document.getElementById("courseSearch").value = "";
+  document.getElementById("courseSugg").hidden = true;
 }
 
 /* 课程实时识别计数 */
@@ -323,31 +435,59 @@ function cmp_needList(d) {
     .sort((a, b) => b.targets.length - a.targets.length || (a.code < b.code ? -1 : 1));
 }
 
-/* 💡 一句话结论：把计算结果翻译成行动——主攻谁、先补哪门、TAG 保底几所 */
+/* TAG 保底计数：GPA 达标且不在排除名单的校区数 */
+function cmp_tagOkCount(gpa, majorQuery) {
+  if (gpa == null || typeof TAG_CHANCE === "undefined" || !TAG_CHANCE.campuses) return 0;
+  const q = String(majorQuery || "").toLowerCase().trim();
+  return TAG_CHANCE.campuses.filter(c => {
+    const hit = q && (c.excluded || []).find(e => {
+      const el = String(e).toLowerCase();
+      return el.includes(q) || q.includes(el);
+    });
+    return !hit && c.gpa[1] > 0 && gpa >= c.gpa[1];
+  }).length;
+}
+
+/* 💡 策略型结论：冲刺 / 主攻 / 保底三档 + 先补哪门课。
+ * 有 GPA 时按录取概率分档（UCLA band=1 → 冲刺；其余按覆盖率排主攻；TAG 达标为保底）；
+ * 无 GPA 时退化为覆盖率最高 + 提示填 GPA。 */
 function cmp_verdict(d, chanceArr, gpa) {
   const ok = d.targets.filter(tt => tt.status !== "no_agreement");
   if (!ok.length)
     return `<div class="card verdict"><div class="verdict-text">💡 ${cmp_escape(t("verdict_no_target"))}</div></div>`;
-  const best = [...ok].sort((a, b) => b.coverage_pct - a.coverage_pct)[0];
-  const ch = chanceArr[d.targets.indexOf(best)];
-  const chancePart = (ch && ch.band)
-    ? t("verdict_chance", { level: t(ch.band === 3 ? "ch_high" : ch.band === 2 ? "ch_mid" : "ch_low") }) : "";
   const need = cmp_needList(d);
   const coursePart = need.length ? t("verdict_course", { code: need[0].code, n: need[0].targets.length }) : t("verdict_course_done");
-  let tagPart = "";
-  if (gpa != null && typeof TAG_CHANCE !== "undefined" && TAG_CHANCE.campuses) {
-    const q = String(d.major_query || "").toLowerCase().trim();
-    const k = TAG_CHANCE.campuses.filter(c => {
-      const hit = q && (c.excluded || []).find(e => {
-        const el = String(e).toLowerCase();
-        return el.includes(q) || q.includes(el);
-      });
-      return !hit && c.gpa[1] > 0 && gpa >= c.gpa[1];
-    }).length;
-    if (k) tagPart = t("verdict_tag", { n: k });
+  const tagN = cmp_tagOkCount(gpa, d.major_query);
+  const safetyPart = tagN ? t("verdict_safety", { n: tagN }) : "";
+
+  const label = (tt) => {
+    const ch = chanceArr[d.targets.indexOf(tt)];
+    const band = ch && ch.band;
+    if (/ucla/i.test(tt.target_name || "") && band)
+      return t("verdict_item_chance", { name: tt.target_name, level: t(band === 3 ? "ch_high" : band === 2 ? "ch_mid" : "ch_low") });
+    return t("verdict_item_cov", { name: tt.target_name, pct: tt.coverage_pct });
+  };
+
+  let head;
+  if (gpa == null) {
+    const best = [...ok].sort((a, b) => b.coverage_pct - a.coverage_pct)[0];
+    head = t("verdict_target", { list: label(best) })
+      + t("verdict_sep1") + t("verdict_need_gpa");
+  } else {
+    const reachItems = [], mainTargets = [];
+    for (const tt of ok) {
+      const ch = chanceArr[d.targets.indexOf(tt)];
+      if (/ucla/i.test(tt.target_name || "") && ch && ch.band === 1) reachItems.push(tt);
+      else mainTargets.push(tt);
+    }
+    mainTargets.sort((a, b) => b.coverage_pct - a.coverage_pct);
+    const parts = [];
+    if (reachItems.length) parts.push(t("verdict_reach", { list: reachItems.map(label).join(t("verdict_list_sep")) }));
+    if (mainTargets.length) parts.push(t("verdict_target", { list: mainTargets.map(label).join(t("verdict_list_sep")) }));
+    if (safetyPart) parts.push(safetyPart);
+    head = parts.join(t("verdict_sep2"));
   }
-  const text = t("verdict_main", { target: best.target_name, pct: best.coverage_pct, chance: chancePart })
-    + t("verdict_sep1") + coursePart + (tagPart ? t("verdict_sep2") + tagPart : "") + t("verdict_end");
+  const text = head + t("verdict_sep1") + coursePart + t("verdict_end");
   return `<div class="card verdict"><div class="verdict-text">💡 ${cmp_escape(text)}</div></div>`;
 }
 

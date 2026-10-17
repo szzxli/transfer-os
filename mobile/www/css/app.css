@@ -225,6 +225,10 @@ textarea { min-height: 76px; resize: vertical; }
 .req { padding: 10px 2px; border-bottom: 1px solid #f6f5fa; }
 .req:last-child { border-bottom: none; }
 
+/* 方案对比 diff */
+.diff-add { color: #15803d; font-weight: 700; padding: 6px 2px; font-size: 14px; }
+.diff-del { color: var(--red); font-weight: 700; padding: 6px 2px; font-size: 14px; }
+
 /* ---------- 加载 / 错误 / 空态 ---------- */
 .loading { text-align: center; padding: 28px 0; color: var(--muted); }
 .spinner {
