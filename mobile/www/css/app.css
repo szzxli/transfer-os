@@ -265,6 +265,12 @@ textarea { min-height: 76px; resize: vertical; }
 .tool-tx { flex: 1; min-width: 0; }
 .tool-t { font-weight: 800; font-size: 16px; margin-bottom: 2px; }
 .tool-go { font-size: 24px; color: var(--brand1); flex: none; }
+/* 数据新鲜度徽章 */
+.fresh-badge {
+  display: inline-block; font-size: 11px; font-weight: 600; color: #4a5568;
+  background: #eef2f7; border: 1px solid #dbe3ec; border-radius: 999px;
+  padding: 2px 8px; margin-left: 4px; vertical-align: middle; white-space: nowrap;
+}
 
 /* ---------- 加载 / 错误 / 空态 ---------- */
 .loading { text-align: center; padding: 28px 0; color: var(--muted); }

@@ -1,5 +1,5 @@
 /* Transfer OS service worker — offline-first cache for the static app shell */
-const CACHE = 'transfer-os-v24';
+const CACHE = 'transfer-os-v25';
 const ASSETS = [
   './',
   './index.html',
