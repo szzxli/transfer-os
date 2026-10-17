@@ -1,4 +1,4 @@
-/* Transfer OS 移动端共享样式：活力版
+/* Transfer OS 移动端共享样式：活力版 v2 (redeploy)
  * 简单高效的布局 + 生机勃勃的动效。所有动效走 transform/opacity（GPU），
  * 并尊重 prefers-reduced-motion。类名与旧版兼容，JS/HTML 无需改动。 */
 :root {
