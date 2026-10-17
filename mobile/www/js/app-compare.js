@@ -456,7 +456,12 @@ function cmp_verdict(d, chanceArr, gpa) {
   if (!ok.length)
     return `<div class="card verdict"><div class="verdict-text">💡 ${cmp_escape(t("verdict_no_target"))}</div></div>`;
   const need = cmp_needList(d);
-  const coursePart = need.length ? t("verdict_course", { code: need[0].code, n: need[0].targets.length }) : t("verdict_course_done");
+  /* n=1 时单复数（EN/ES） */
+  const coursePart = need.length
+    ? (need[0].targets.length === 1
+        ? t("verdict_course_1", { code: need[0].code })
+        : t("verdict_course", { code: need[0].code, n: need[0].targets.length }))
+    : t("verdict_course_done");
   const tagN = cmp_tagOkCount(gpa, d.major_query);
   const safetyPart = tagN ? t("verdict_safety", { n: tagN }) : "";
 
@@ -470,8 +475,9 @@ function cmp_verdict(d, chanceArr, gpa) {
 
   let head;
   if (gpa == null) {
+    /* 无 GPA：退化为覆盖率最高 + 提示填 GPA（不用录取概率口径，避免误导） */
     const best = [...ok].sort((a, b) => b.coverage_pct - a.coverage_pct)[0];
-    head = t("verdict_target", { list: label(best) })
+    head = t("verdict_target", { list: t("verdict_item_cov", { name: best.target_name, pct: best.coverage_pct }) })
       + t("verdict_sep1") + t("verdict_need_gpa");
   } else {
     const reachItems = [], mainTargets = [];
@@ -706,6 +712,9 @@ function cmp_render(d) {
 
 window.__reRender = function () {
   cmp_countCourses();
+  cmp_renderPlans();
+  const pd = document.getElementById("planDiff");
+  if (pd) pd.innerHTML = "";
   if (lastCmpResult) cmp_render(lastCmpResult);
   else cmp_placeholder();
 };
