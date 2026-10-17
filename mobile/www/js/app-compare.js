@@ -12,6 +12,65 @@ function cmp_escape(s) {
     .replace(/"/g, "&quot;");
 }
 
+/* 我的规划：命名保存多套方案（localStorage，最多 20 套） */
+const PLANS_KEY = "transferos_cmp_plans";
+function cmp_getPlans() {
+  try { return JSON.parse(localStorage.getItem(PLANS_KEY) || "[]"); }
+  catch (e) { return []; }
+}
+function cmp_setPlans(plans) {
+  try { localStorage.setItem(PLANS_KEY, JSON.stringify(plans.slice(0, 20))); } catch (e) { /* 忽略 */ }
+}
+function cmp_planData() {
+  return {
+    cc_name: document.getElementById("cc").value,
+    major_query: document.getElementById("major").value.trim(),
+    targets: [...document.querySelectorAll("#targets .chip.on")].map(c => c.dataset.v),
+    courses: document.getElementById("courses").value,
+    gpa: document.getElementById("gpa").value.trim(),
+  };
+}
+function cmp_savePlan() {
+  const nameEl = document.getElementById("planName");
+  const name = (nameEl.value || "").trim() || t("plan_untitled");
+  const plans = cmp_getPlans();
+  plans.unshift({ id: Date.now(), name, ts: Date.now(), data: cmp_planData() });
+  cmp_setPlans(plans);
+  nameEl.value = "";
+  cmp_renderPlans();
+}
+function cmp_loadPlan(id) {
+  const p = cmp_getPlans().find(x => x.id === id);
+  if (!p) return;
+  const d = p.data || {};
+  const cc = document.getElementById("cc");
+  if (d.cc_name) cc.value = d.cc_name;
+  document.getElementById("major").value = d.major_query || "";
+  document.getElementById("courses").value = d.courses || "";
+  document.getElementById("gpa").value = d.gpa || "";
+  try {
+    CMP_SAVED = Object.assign(CMP_SAVED || {}, { cc_name: d.cc_name, major_query: d.major_query, courses: d.courses, gpa: d.gpa, targets: d.targets });
+  } catch (e) { /* 忽略 */ }
+  cmp_renderMajors();
+  cmp_showStep(d.major_query ? 2 : 1);
+  cmp_countCourses();
+}
+function cmp_delPlan(id) {
+  cmp_setPlans(cmp_getPlans().filter(x => x.id !== id));
+  cmp_renderPlans();
+}
+function cmp_renderPlans() {
+  const box = document.getElementById("planList");
+  if (!box) return;
+  const plans = cmp_getPlans();
+  box.innerHTML = plans.map(p =>
+    `<div class="plan-item"><div><div class="plan-name">${cmp_escape(p.name)}</div>`
+    + `<div class="hint">${cmp_escape(new Date(p.ts).toLocaleDateString())} · ${cmp_escape((p.data && p.data.major_query) || "")}</div></div>`
+    + `<div class="plan-ops"><button type="button" class="linkbtn" onclick="cmp_loadPlan(${p.id})">${cmp_escape(t("plan_load"))}</button>`
+    + `<button type="button" class="linkbtn danger" onclick="cmp_delPlan(${p.id})">${cmp_escape(t("plan_del"))}</button></div></div>`
+  ).join("") || `<div class="hint">${cmp_escape(t("plans_empty"))}</div>`;
+}
+
 function cmp_init() {
   initLang();
   CMP_OPTS = cp_listOptions();
@@ -39,6 +98,7 @@ function cmp_init() {
   if (CMP_SAVED.courses) document.getElementById("courses").value = CMP_SAVED.courses;
   if (CMP_SAVED.gpa) document.getElementById("gpa").value = CMP_SAVED.gpa;
   cmp_renderMajors();
+  cmp_renderPlans();
   cmp_showStep(CMP_SAVED.major_query ? 2 : 1);
   applyI18n();
   cmp_countCourses();
@@ -70,13 +130,64 @@ function cmp_toStep2() {
 }
 
 /* 专业自动补全：该 CC 所有目标下的专业去重 */
+let CMP_MAJORS = [];
+let CMP_SUGG_LIST = [];
+let CMP_SUGG_IDX = -1;
+
 function cmp_renderMajors() {
   const cc = document.getElementById("cc").value;
   const set = new Set();
   const byTgt = (CMP_OPTS.by_cc[cc]) || {};
   Object.keys(byTgt).forEach(tg => (byTgt[tg] || []).forEach(m => set.add(m)));
-  document.getElementById("majorList").innerHTML =
-    [...set].sort().map(m => `<option value="${cmp_escape(m)}">`).join("");
+  CMP_MAJORS = [...set].sort();
+}
+
+/* 自定义专业自动补全：原生 datalist 在移动端体验差，自绘下拉并支持键盘 */
+function cmp_suggest() {
+  const inp = document.getElementById("major");
+  const box = document.getElementById("majorSugg");
+  const q = inp.value.trim().toLowerCase();
+  CMP_SUGG_LIST = (q ? CMP_MAJORS.filter(m => m.toLowerCase().includes(q)) : CMP_MAJORS).slice(0, 8);
+  CMP_SUGG_IDX = -1;
+  if (!CMP_SUGG_LIST.length) { box.hidden = true; return; }
+  box.innerHTML = CMP_SUGG_LIST.map((m, i) =>
+    `<div class="sugg-item" data-i="${i}">${cmp_escape(m)}</div>`).join("");
+  box.hidden = false;
+  box.querySelectorAll(".sugg-item").forEach(el => {
+    el.addEventListener("mousedown", e => {
+      e.preventDefault();
+      inp.value = CMP_SUGG_LIST[+el.dataset.i];
+      box.hidden = true;
+      inp.focus();
+    });
+  });
+}
+
+function cmp_suggestPaint() {
+  document.querySelectorAll("#majorSugg .sugg-item").forEach((el, i) =>
+    el.classList.toggle("active", i === CMP_SUGG_IDX));
+}
+
+function cmp_suggestKey(e) {
+  const box = document.getElementById("majorSugg");
+  if (box.hidden) return;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    CMP_SUGG_IDX = e.key === "ArrowDown"
+      ? Math.min(CMP_SUGG_IDX + 1, CMP_SUGG_LIST.length - 1)
+      : Math.max(CMP_SUGG_IDX - 1, 0);
+    cmp_suggestPaint();
+  } else if (e.key === "Enter" && CMP_SUGG_IDX >= 0) {
+    e.preventDefault();
+    document.getElementById("major").value = CMP_SUGG_LIST[CMP_SUGG_IDX];
+    box.hidden = true;
+  } else if (e.key === "Escape") {
+    box.hidden = true;
+  }
+}
+
+function cmp_suggestHide() {
+  setTimeout(() => { document.getElementById("majorSugg").hidden = true; }, 150);
 }
 
 /* 课程实时识别计数 */
@@ -98,7 +209,7 @@ function cmp_renderTargets() {
   const box = document.getElementById("targets");
   const tgts = Object.keys((CMP_OPTS.by_cc[cc]) || {});
   box.innerHTML = tgts.map(t =>
-    `<span class="chip on" data-v="${cmp_escape(t)}" onclick="this.classList.toggle('on')">${cmp_escape(t)}</span>`
+    `<button type="button" class="chip on" data-v="${cmp_escape(t)}" onclick="this.classList.toggle('on')">${cmp_escape(t)}</button>`
   ).join("") || `<span class="hint">${cmp_escape(t("no_report_for_cc"))}</span>`;
 }
 

@@ -32,8 +32,11 @@
     <select id="cc"></select>
 
     <label class="f" for="major" data-i18n="f_major2"></label>
-    <input id="major" type="text" value="computer science" data-i18n-ph="ph_major2" autocomplete="off" list="majorList">
-    <datalist id="majorList"></datalist>
+    <div class="sugg-wrap">
+      <input id="major" type="text" value="computer science" data-i18n-ph="ph_major2" autocomplete="off"
+        oninput="cmp_suggest()" onfocus="cmp_suggest()" onkeydown="cmp_suggestKey(event)" onblur="cmp_suggestHide()">
+      <div class="sugg" id="majorSugg" hidden></div>
+    </div>
     <div class="hint" data-i18n="f_major2_hint"></div>
 
     <button class="btn" id="toStep2" onclick="cmp_toStep2()" data-i18n="btn_next"></button>
@@ -57,7 +60,21 @@
     </div>
   </div>
 
+  <div class="card" id="plans">
+    <div class="step-tag"><span data-i18n="plans_title"></span></div>
+    <div class="plan-row">
+      <input id="planName" data-i18n-ph="ph_plan_name" maxlength="30" autocomplete="off">
+      <button class="btn ghost sm" onclick="cmp_savePlan()" data-i18n="btn_save_plan"></button>
+    </div>
+    <div id="planList"></div>
+  </div>
+
   <div id="result"></div>
+
+  <details class="card scope">
+    <summary data-i18n="scope_title"></summary>
+    <div class="hint" data-i18n="scope_body"></div>
+  </details>
 
   <div class="disclaimer" data-i18n="disclaimer_compare"></div>
 </div>
@@ -68,18 +85,18 @@
   <a href="validate.html"><span class="ico">📋</span><span data-i18n="nav_validate"></span></a>
 </nav>
 
-<script src="js/artic-gz-1.js?v=14"></script>
-<script src="js/artic-gz-2.js?v=14"></script>
-<script src="js/artic-gz-3.js?v=14"></script>
-<script src="js/artic-gz-4.js?v=14"></script>
-<script src="js/artic-boot.js?v=14"></script>
-<script src="js/admit-gz-1.js?v=14"></script>
-<script src="js/admit-boot.js?v=14"></script>
-<script src="js/tagchance-data.js?v=14"></script>
-<script src="js/i18n.js?v=14"></script>
-<script src="js/comparator.js?v=14"></script>
-<script src="js/admit.js?v=14"></script>
-<script src="js/app-compare.js?v=14"></script>
+<script src="js/artic-gz-1.js?v=15"></script>
+<script src="js/artic-gz-2.js?v=15"></script>
+<script src="js/artic-gz-3.js?v=15"></script>
+<script src="js/artic-gz-4.js?v=15"></script>
+<script src="js/artic-boot.js?v=15"></script>
+<script src="js/admit-gz-1.js?v=15"></script>
+<script src="js/admit-boot.js?v=15"></script>
+<script src="js/tagchance-data.js?v=15"></script>
+<script src="js/i18n.js?v=15"></script>
+<script src="js/comparator.js?v=15"></script>
+<script src="js/admit.js?v=15"></script>
+<script src="js/app-compare.js?v=15"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {

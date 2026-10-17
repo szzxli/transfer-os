@@ -136,10 +136,14 @@ textarea { min-height: 76px; resize: vertical; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .chip {
   border: 1.5px solid var(--line); background: #fff; border-radius: 999px;
-  padding: 8px 14px; font-size: 14px; cursor: pointer; user-select: none;
+  padding: 8px 14px; font-size: 14px; font-family: inherit; cursor: pointer; user-select: none;
   transition: all .22s var(--spring);
 }
 .chip:active { transform: scale(.93); }
+/* 键盘可达：focus 可见 */
+.chip:focus-visible, .btn:focus-visible, .sugg-item:focus-visible {
+  outline: 2.5px solid var(--brand1); outline-offset: 2px;
+}
 .chip.on {
   border-color: transparent; color: #fff; font-weight: 700;
   background: var(--brand-grad);
@@ -168,6 +172,58 @@ textarea { min-height: 76px; resize: vertical; }
   background: #fff; color: var(--brand1); border: 1.5px solid var(--brand1);
   box-shadow: none; animation: none;
 }
+
+/* 自定义专业自动补全下拉 */
+.sugg-wrap { position: relative; }
+.sugg {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 30;
+  background: #fff; border: 1px solid var(--line); border-radius: 12px; margin-top: 4px;
+  box-shadow: 0 12px 32px rgba(30, 27, 75, .16); overflow: hidden;
+  max-height: 264px; overflow-y: auto;
+}
+.sugg-item {
+  padding: 11px 14px; font-size: 14px; cursor: pointer;
+  border-bottom: 1px solid #f1f0f7;
+}
+.sugg-item:last-child { border-bottom: none; }
+.sugg-item.active, .sugg-item:hover { background: #f4f2ff; }
+
+/* 我的规划 */
+.plan-row { display: flex; gap: 8px; align-items: center; }
+.plan-row input { flex: 1; margin: 0; }
+.btn.sm { width: auto; margin-top: 0; padding: 10px 16px; font-size: 14px; flex-shrink: 0; }
+.plan-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 2px; border-bottom: 1px solid #f1f0f7;
+}
+.plan-item:last-child { border-bottom: none; }
+.plan-name { font-weight: 700; font-size: 14px; }
+.plan-ops { display: flex; gap: 4px; }
+.linkbtn {
+  background: none; border: none; color: var(--brand1); font-size: 13px; font-weight: 700;
+  cursor: pointer; padding: 6px 8px; font-family: inherit;
+}
+.linkbtn.danger { color: var(--red); }
+
+/* 数据覆盖说明 */
+.card.scope { padding: 12px 16px; }
+.card.scope summary { font-weight: 800; font-size: 14px; cursor: pointer; color: var(--brand1); }
+.card.scope .hint { margin-top: 8px; line-height: 1.7; }
+
+/* ---------- 视觉打磨：层级与节奏 ---------- */
+.section-title {
+  font-size: 14px; font-weight: 800; color: var(--brand1);
+  margin: 18px 0 6px; letter-spacing: .02em;
+  padding-left: 10px; border-left: 3px solid var(--brand1);
+}
+.section-title:first-child { margin-top: 4px; }
+.sum-table th {
+  background: #f7f6fc; font-size: 12px; color: var(--muted);
+  padding: 10px 8px; white-space: nowrap;
+}
+.sum-table td { padding: 12px 8px; border-top: 1px solid #f1f0f7; vertical-align: middle; }
+.req { padding: 10px 2px; border-bottom: 1px solid #f6f5fa; }
+.req:last-child { border-bottom: none; }
 
 /* ---------- 加载 / 错误 / 空态 ---------- */
 .loading { text-align: center; padding: 28px 0; color: var(--muted); }
