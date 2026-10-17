@@ -6,7 +6,25 @@
 
 function cp_normCode(code) {
   if (!code) return "";
-  return String(code).trim().toUpperCase().replace(/\s+/g, " ");
+  return String(code).trim().toUpperCase().replace(/[-._]/g, " ").replace(/\s+/g, " ");
+}
+
+/* 无空格形态：ACCT1A <-> ACCT 1A 互认 */
+function cp_flat(code) { return cp_normCode(code).replace(/ /g, ""); }
+
+/* 双向容错：ACCT1A <-> ACCT 1A 任一方向都能命中 */
+function cp_has(have, code) {
+  return have.has(code) || have.has(code.replace(/ /g, ""));
+}
+/* have 集合同时收录带空格/无空格两种形态，显示仍用原码 */
+function cp_makeHave(courses) {
+  const s = new Set();
+  for (const c of (courses || [])) {
+    const n = cp_normCode(c);
+    if (!n) continue;
+    s.add(n); s.add(n.replace(/ /g, ""));
+  }
+  return s;
 }
 
 function cp_normLabel(text) {
@@ -82,9 +100,7 @@ function cp_groupArticulated(mappings) {
 
 function cp_compare(ccName, majorQuery, targetNames, studentCourses) {
   const reports = cp_loadReports();
-  const have = new Set(
-    (studentCourses || []).map(cp_normCode).filter(Boolean)
-  );
+  const have = cp_makeHave(studentCourses);
   const targets = [];
   for (const target of targetNames) {
     const report = cp_findReport(reports, ccName, target, majorQuery);
@@ -141,10 +157,10 @@ function cp_compareOne(report, have) {
       const conj = (g.conj || "And").toLowerCase();
       optionGroups.push(conj === "or" ? codes.join(" / ") : codes.join(" + "));
       if (conj === "or") {
-        const hit = codes.filter(c => have.has(c));
+        const hit = codes.filter(c => cp_has(have, c));
         if (hit.length) { covered = true; satisfiedVia.push(...hit); }
       } else { // And：组内课程要全修
-        if (codes.every(c => have.has(c))) {
+        if (codes.every(c => cp_has(have, c))) {
           covered = true; satisfiedVia.push(...codes);
         }
       }

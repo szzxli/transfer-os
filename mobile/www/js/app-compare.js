@@ -734,12 +734,81 @@ function cmp_toggle(i) {
   if (tg) tg.textContent = t(open ? "collapse_detail" : "expand_detail");
 }
 
+/* ---- 课程输入容错：未识别课程 + "你是不是指"模糊提示 ---- */
+function cmp_lev(a, b) {
+  const m = a.length, n = b.length;
+  if (!m) return n; if (!n) return m;
+  let prev = new Array(n + 1), cur = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    cur[0] = i;
+    for (let j = 1; j <= n; j++)
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    const tmp = prev; prev = cur; cur = tmp;
+  }
+  return prev[n];
+}
+
+function cmp_suggestCourse(raw) {
+  const flat = cp_flat(raw);
+  if (!flat || !CMP_COURSES || !CMP_COURSES.length) return null;
+  const known = new Set(CMP_COURSES.map(e => cp_flat(e.code)));
+  if (known.has(flat)) return null; /* 已识别：不需要建议 */
+  let best = null, bestD = 3; /* 最多容忍 2 个编辑 */
+  for (const e of CMP_COURSES) {
+    const f = cp_flat(e.code);
+    if (f === flat) continue;
+    const dd = cmp_lev(flat, f);
+    if (dd >= bestD) continue;
+    if (dd > 1 && f.slice(0, 2) !== flat.slice(0, 2)) continue; /* 前缀不同且距离>1：大概率不是 */
+    bestD = dd; best = e.code;
+  }
+  return best;
+}
+
+function cmp_unrecognized() {
+  if (!CMP_COURSES || !CMP_COURSES.length) cmp_buildCourseIndex();
+  const raws = document.getElementById("courses").value
+    .split(/[\n,，;；]+/).map(s => s.trim()).filter(Boolean);
+  const known = new Set((CMP_COURSES || []).map(e => cp_flat(e.code)));
+  return raws.filter(r => {
+    const f = cp_flat(r);
+    return f && !known.has(f);
+  });
+}
+
+function cmp_unrecCard() {
+  const unrec = cmp_unrecognized();
+  if (!unrec.length) return "";
+  const rows = unrec.map((r, i) => {
+    const sug = cmp_suggestCourse(r);
+    return `<div class="unrec-row"><span>“${cmp_escape(r)}”</span>` +
+      (sug
+        ? `<span class="hint">${cmp_escape(t("did_you_mean"))}</span><button type="button" class="chip sug" onclick="cmp_fixCourse(${i})">${cmp_escape(sug)}</button>`
+        : `<span class="hint">${cmp_escape(t("no_suggestion"))}</span>`) +
+      `</div>`;
+  }).join("");
+  return `<div class="card"><div class="section-title">⚠️ ${cmp_escape(t("unrec_title"))}</div>${rows}</div>`;
+}
+
+/* 点击建议：一键替换该行并重跑 */
+function cmp_fixCourse(i) {
+  const raw = cmp_unrecognized()[i];
+  const sug = raw && cmp_suggestCourse(raw);
+  if (!sug) return;
+  const ta = document.getElementById("courses");
+  const k = cp_flat(raw);
+  ta.value = ta.value.split(/[\n,，;；]+/).map(l => cp_flat(l.trim()) === k ? sug : l).join("\n");
+  cmp_countCourses();
+  cmp_run();
+}
+
 function cmp_render(d) {
   const box = document.getElementById("result");
   const newestYear = d.targets.map(x => x.academic_year).filter(Boolean).sort().reverse()[0] || "";
   const gpa = cmp_gpa();
   const chanceArr = d.targets.map(tt => cmp_chanceFor(tt, d, gpa));
-  let html = cmp_verdict(d, chanceArr, gpa) + cmp_summaryTable(d, chanceArr) + cmp_actionPlan(d) + cmp_chanceCard(d, chanceArr, gpa);
+  let html = cmp_verdict(d, chanceArr, gpa) + cmp_unrecCard() + cmp_summaryTable(d, chanceArr) + cmp_actionPlan(d) + cmp_chanceCard(d, chanceArr, gpa);
   let idx = 0;
   for (const tt of d.targets) {
     if (tt.status === "no_agreement") {

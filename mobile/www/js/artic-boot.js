@@ -1,7 +1,7 @@
 /* Articulation 数据引导：解压 ARTIC_GZ(gzip+base64) -> ARTIC_DATA。
    自动生成流程见 mobile/scripts/build-data.py。*/
 var ARTIC_DATA = [];
-var ARTIC_META = { fetched: "2026-10-16" };
+var ARTIC_META = { fetched: "2026-10-17" };
 var ARTIC_READY = (function () {
   function fail(e) { try { console.error("[artic] data load failed", e); } catch (_) {} }
   try {
