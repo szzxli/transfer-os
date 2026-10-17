@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Transfer OS · 课程对比</title>
-<link rel="stylesheet" href="css/app.css?v=18">
+<link rel="stylesheet" href="css/app.css?v=19">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7c3aed">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -40,6 +40,7 @@
     <div class="hint" data-i18n="f_major2_hint"></div>
 
     <button class="btn" id="toStep2" onclick="cmp_toStep2()" data-i18n="btn_next"></button>
+    <button class="btn ghost sm" style="width:100%;margin-top:8px" onclick="tour_start()" data-i18n="tour_replay"></button>
   </div>
 
   <div class="card" id="step2" hidden>
@@ -77,6 +78,16 @@
   </div>
   <div id="planDiff"></div>
 
+  <details class="card scope">
+    <summary data-i18n="guide_title"></summary>
+    <div class="hint guide-steps">
+      <div>1. <span data-i18n="guide_s1"></span></div>
+      <div>2. <span data-i18n="guide_s2"></span></div>
+      <div>3. <span data-i18n="guide_s3"></span></div>
+      <div>4. <span data-i18n="guide_s4"></span></div>
+    </div>
+  </details>
+
   <div id="result"></div>
 
   <details class="card scope">
@@ -93,18 +104,18 @@
   <a href="validate.html"><span class="ico">📋</span><span data-i18n="nav_validate"></span></a>
 </nav>
 
-<script src="js/artic-gz-1.js?v=18"></script>
-<script src="js/artic-gz-2.js?v=18"></script>
-<script src="js/artic-gz-3.js?v=18"></script>
-<script src="js/artic-gz-4.js?v=18"></script>
-<script src="js/artic-boot.js?v=18"></script>
-<script src="js/admit-gz-1.js?v=18"></script>
-<script src="js/admit-boot.js?v=18"></script>
-<script src="js/tagchance-data.js?v=18"></script>
-<script src="js/i18n.js?v=18"></script>
-<script src="js/comparator.js?v=18"></script>
-<script src="js/admit.js?v=18"></script>
-<script src="js/app-compare.js?v=18"></script>
+<script src="js/artic-gz-1.js?v=19"></script>
+<script src="js/artic-gz-2.js?v=19"></script>
+<script src="js/artic-gz-3.js?v=19"></script>
+<script src="js/artic-gz-4.js?v=19"></script>
+<script src="js/artic-boot.js?v=19"></script>
+<script src="js/admit-gz-1.js?v=19"></script>
+<script src="js/admit-boot.js?v=19"></script>
+<script src="js/tagchance-data.js?v=19"></script>
+<script src="js/i18n.js?v=19"></script>
+<script src="js/comparator.js?v=19"></script>
+<script src="js/admit.js?v=19"></script>
+<script src="js/app-compare.js?v=19"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
