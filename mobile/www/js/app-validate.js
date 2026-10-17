@@ -177,7 +177,7 @@ function va_render(d) {
   </div>`;
 
   /* ---- Cal-GETC 通识进度 ---- */
-  const ge = d.ge;
+  const ge = s.ge;
   if (ge && ge.ok) {
     const rows = ge.areas.map(a => {
       const nm = t("ge_area_" + a.code) || a.code;

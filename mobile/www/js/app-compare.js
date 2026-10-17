@@ -112,6 +112,7 @@ function cmp_admitBadge(d, tt) {
 function cmp_render(d) {
   const box = document.getElementById("result");
   let html = "";
+  const newestYear = d.targets.map(x => x.academic_year).filter(Boolean).sort().reverse()[0] || "";
   for (const tt of d.targets) {
     if (tt.status === "no_agreement") {
       html += `<div class="card noagree">
@@ -151,6 +152,8 @@ function cmp_render(d) {
       </div>
       <div class="cov-bar"><div style="width:${tt.coverage_pct}%"></div></div>
       <div class="hint">${cmp_escape(t("cov_line", { c: tt.covered, t: tt.total_requirements }))}</div>
+      ${(tt.academic_year && newestYear && tt.academic_year < newestYear)
+        ? `<div class="risk">${cmp_escape(t("old_year_note", { y: tt.academic_year, n: newestYear }))}</div>` : ""}
       ${cmp_admitBadge(d, tt)}
       ${wasted}
       <div class="section-title">${cmp_escape(t("sec_reqdetail"))}</div>
