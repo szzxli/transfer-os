@@ -189,9 +189,12 @@ function va_render(d) {
       return `<div class="req"><span class="code">${va_escape(a.code)}</span> ${va_escape(nm)} ${st}${used}</div>`;
     }).join("");
     const banner = ge.all_done ? `<div class="hint">${va_escape(t("ge_all_done"))}</div>` : "";
+    const ucsdWarn = [...(d.targets || []), ...(d.no_agreement_targets || [])]
+      .some(n => /san diego/i.test(n || ""))
+      ? `<div class="risk">${va_escape(t("ge_ucsd_warn"))}</div>` : "";
     html += `<div class="card">
       <div class="cov-head"><h3 style="margin:0">${va_escape(t("sec_ge"))}</h3></div>
-      ${banner}${rows}
+      ${banner}${rows}${ucsdWarn}
       <div class="hint">${va_escape(t("ge_note"))}</div>
     </div>`;
   }
