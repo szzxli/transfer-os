@@ -229,6 +229,24 @@ textarea { min-height: 76px; resize: vertical; }
 .diff-add { color: #15803d; font-weight: 700; padding: 6px 2px; font-size: 14px; }
 .diff-del { color: var(--red); font-weight: 700; padding: 6px 2px; font-size: 14px; }
 
+/* 新手引导巡游 */
+#tourOverlay { position: fixed; inset: 0; z-index: 1000; }
+.tour-hole {
+  position: fixed; z-index: 1001; pointer-events: none;
+  border: 3px solid var(--brand1); border-radius: 14px;
+  box-shadow: 0 0 0 9999px rgba(15, 12, 40, .62);
+  transition: all .3s ease;
+}
+.tour-tip {
+  position: fixed; z-index: 1002; background: #fff; border-radius: 16px;
+  padding: 16px; box-shadow: 0 16px 48px rgba(15, 12, 40, .35);
+}
+.tour-title { font-weight: 800; font-size: 15px; margin-bottom: 6px; }
+.tour-body { font-size: 14px; color: #444; line-height: 1.6; }
+.tour-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+.tour-btns { white-space: nowrap; }
+.guide-steps div { padding: 5px 0; line-height: 1.6; }
+
 /* ---------- 加载 / 错误 / 空态 ---------- */
 .loading { text-align: center; padding: 28px 0; color: var(--muted); }
 .spinner {

@@ -105,6 +105,97 @@ function cmp_renderPlans() {
   ).join("") || `<div class="hint">${cmp_escape(t("plans_empty"))}</div>`;
 }
 
+/* ---------- 新手引导巡游：coach-mark，一步步带点 ---------- */
+const TOUR_KEY = "transferos_tour_done";
+let TOUR_IDX = -1;
+function tour_steps() {
+  return [
+    { sel: "#cc", tk: "tour1_t", bk: "tour1_b" },
+    { sel: "#major", tk: "tour2_t", bk: "tour2_b" },
+    { before: () => cmp_showStep(2), sel: "#targets", tk: "tour3_t", bk: "tour3_b" },
+    { sel: "#courseSearch", tk: "tour4_t", bk: "tour4_b" },
+    { sel: "#courses", tk: "tour5_t", bk: "tour5_b" },
+    { sel: "#go", tk: "tour6_t", bk: "tour6_b" },
+    { center: true, tk: "tour7_t", bk: "tour7_b" },
+  ];
+}
+function tour_start() {
+  if (document.getElementById("tourOverlay")) return;
+  const ov = document.createElement("div");
+  ov.id = "tourOverlay";
+  ov.style.display = "none";
+  ov.innerHTML = `<div class="tour-hole" id="tourHole"></div>
+    <div class="tour-tip" id="tourTip">
+      <div class="tour-title" id="tourTitle"></div>
+      <div class="tour-body" id="tourBody"></div>
+      <div class="tour-foot">
+        <span class="hint" id="tourCount"></span>
+        <span class="tour-btns">
+          <button type="button" class="linkbtn" id="tourPrev"></button><button type="button" class="linkbtn" id="tourNext"></button><button type="button" class="linkbtn" id="tourSkip"></button>
+        </span>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  document.getElementById("tourPrev").onclick = () => tour_show(TOUR_IDX - 1);
+  document.getElementById("tourNext").onclick = () => tour_show(TOUR_IDX + 1);
+  document.getElementById("tourSkip").onclick = tour_end;
+  tour_show(0);
+}
+function tour_show(i) {
+  const steps = tour_steps();
+  if (i >= steps.length) { tour_end(); return; }
+  if (i < 0) i = 0;
+  TOUR_IDX = i;
+  const st = steps[i];
+  if (st.before) { try { st.before(); } catch (e) { /* 忽略 */ } }
+  document.getElementById("tourTitle").textContent = t(st.tk);
+  document.getElementById("tourBody").textContent = t(st.bk);
+  document.getElementById("tourCount").textContent = (i + 1) + "/" + steps.length;
+  const prev = document.getElementById("tourPrev"), next = document.getElementById("tourNext");
+  prev.textContent = t("tour_prev");
+  prev.style.visibility = i === 0 ? "hidden" : "visible";
+  next.textContent = (i === steps.length - 1) ? t("tour_done") : t("tour_next");
+  document.getElementById("tourSkip").textContent = t("tour_skip");
+  const ov = document.getElementById("tourOverlay");
+  const hole = document.getElementById("tourHole");
+  const tip = document.getElementById("tourTip");
+  if (st.center) {
+    hole.style.display = "none";
+    tip.style.top = "50%"; tip.style.bottom = "auto";
+    tip.style.left = "16px"; tip.style.right = "16px";
+    tip.style.transform = "translateY(-50%)";
+    ov.style.display = "block";
+    return;
+  }
+  const el = document.querySelector(st.sel);
+  if (!el) { tour_show(i + 1); return; }
+  ov.style.display = "none";
+  try { el.scrollIntoView({ block: "center" }); } catch (e) { /* 忽略 */ }
+  setTimeout(() => {
+    if (TOUR_IDX !== i) return;
+    const r = el.getBoundingClientRect();
+    hole.style.display = "block";
+    hole.style.top = Math.max(4, r.top - 8) + "px";
+    hole.style.left = Math.max(4, r.left - 8) + "px";
+    hole.style.width = (r.width + 16) + "px";
+    hole.style.height = (r.height + 16) + "px";
+    tip.style.transform = "none";
+    tip.style.left = "16px"; tip.style.right = "16px";
+    if (window.innerHeight - r.bottom > 230) {
+      tip.style.top = (r.bottom + 16) + "px"; tip.style.bottom = "auto";
+    } else {
+      tip.style.bottom = (window.innerHeight - r.top + 16) + "px"; tip.style.top = "auto";
+    }
+    ov.style.display = "block";
+  }, 450);
+}
+function tour_end() {
+  const ov = document.getElementById("tourOverlay");
+  if (ov) ov.remove();
+  try { localStorage.setItem(TOUR_KEY, "1"); } catch (e) { /* 忽略 */ }
+  TOUR_IDX = -1;
+}
+
 function cmp_init() {
   initLang();
   CMP_OPTS = cp_listOptions();
@@ -139,6 +230,12 @@ function cmp_init() {
   applyI18n();
   cmp_countCourses();
   cmp_placeholder();
+  /* 首访自动巡游：没用过且没存过表单的新手 */
+  try {
+    if (!localStorage.getItem(TOUR_KEY) && !CMP_SAVED.major_query) {
+      setTimeout(tour_start, 900);
+    }
+  } catch (e) { /* 忽略 */ }
 }
 
 /* 两步输入：1=学校+专业，2=目标+课程 */
@@ -715,6 +812,7 @@ window.__reRender = function () {
   cmp_renderPlans();
   const pd = document.getElementById("planDiff");
   if (pd) pd.innerHTML = "";
+  if (typeof TOUR_IDX !== "undefined" && TOUR_IDX >= 0) { tour_show(TOUR_IDX); return; }
   if (lastCmpResult) cmp_render(lastCmpResult);
   else cmp_placeholder();
 };
