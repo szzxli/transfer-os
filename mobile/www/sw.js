@@ -1,5 +1,5 @@
 /* Transfer OS service worker — offline-first cache for the static app shell */
-const CACHE = 'transfer-os-v12';
+const CACHE = 'transfer-os-v13';
 const ASSETS = [
   './',
   './index.html',
@@ -45,6 +45,13 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request).then((hit) => hit || fetch(e.request))
+    caches.match(e.request).then((hit) => hit || fetch(e.request).then((res) => {
+      /* 运行时缓存：?v= 版本化资源首次加载后离线可用；只缓存同源成功响应 */
+      if (res && res.ok && new URL(e.request.url).origin === self.location.origin) {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy));
+      }
+      return res;
+    }))
   );
 });
