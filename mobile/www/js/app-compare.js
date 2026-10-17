@@ -92,6 +92,23 @@ function cmp_badge(s) {
   return `<span class="st ${s}">${cmp_escape(m[s] || s)}</span>`;
 }
 
+function cmp_admitBadge(d, tt) {
+  if (!/ucla/i.test(tt.target_name || "")) return "";
+  if (typeof admit_findUcla !== "function") return "";
+  const m = admit_findUcla(d.major_query || tt.major_label || "");
+  if (!m) return "";
+  const rate = (m.r === null || m.r === undefined) ? "?" : Math.round(m.r * 100) + "%";
+  const gpa = (m.g1 !== null && m.g2 !== null) ? `${m.g1}–${m.g2}` : "?";
+  const imp = m.imp
+    ? `<div class="risk">⚠️ ${cmp_escape(t("admit_impacted"))}</div>
+       <div class="hint">💡 ${cmp_escape(t("admit_tip"))}</div>` : "";
+  return `<div class="section-title">${cmp_escape(t("admit_title"))} · UCLA Transfer Profile ${cmp_escape((typeof ADMIT_DATA !== "undefined" && ADMIT_DATA.cycle) || "")}</div>
+    <div class="req"><span class="code">${cmp_escape(m.n)}</span>
+      <div class="ttl">${cmp_escape(t("admit_rate"))}：${cmp_escape(rate)} · ${cmp_escape(t("admit_applicants", { n: m.a === null ? "?" : m.a }))}</div>
+      <div class="hint">${cmp_escape(t("admit_gpa"))}：${cmp_escape(gpa)}</div>
+    </div>${imp}`;
+}
+
 function cmp_render(d) {
   const box = document.getElementById("result");
   let html = "";
@@ -104,8 +121,7 @@ function cmp_render(d) {
       </div>`;
       continue;
     }
-    const reqs = tt.items.map(i => {
-      let extra = "";
+    const reqs = tt.items.map(i => {      let extra = "";
       if (i.status === "covered" && i.via.length)
         extra = `<div class="via">${cmp_escape(t("d_via", { via: i.via.join(" + ") }))}</div>`;
       else if (i.status === "missing" && i.options.length)
@@ -135,6 +151,7 @@ function cmp_render(d) {
       </div>
       <div class="cov-bar"><div style="width:${tt.coverage_pct}%"></div></div>
       <div class="hint">${cmp_escape(t("cov_line", { c: tt.covered, t: tt.total_requirements }))}</div>
+      ${cmp_admitBadge(d, tt)}
       ${wasted}
       <div class="section-title">${cmp_escape(t("sec_reqdetail"))}</div>
       ${reqs}
@@ -160,5 +177,8 @@ window.__reRender = function () {
 };
 
 document.addEventListener("DOMContentLoaded", function () {
-  (window.ARTIC_READY || Promise.resolve()).then(cmp_init);
+  Promise.all([
+    window.ARTIC_READY || Promise.resolve(),
+    window.ADMIT_READY || Promise.resolve(),
+  ]).then(cmp_init);
 });

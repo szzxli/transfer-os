@@ -164,11 +164,37 @@ function va_render(d) {
   const noAg = (d.no_agreement_targets || []).length
     ? `<div class="hint">ℹ️ ${va_escape(t("v_no_agreement_line", { list: d.no_agreement_targets.join("、") }))}</div>`
     : "";
+  const geLine = (s.ge_courses || []).length
+    ? `<div class="hint">${va_escape(t("v_ge_line", {
+        n: s.ge_courses.length,
+        list: s.ge_courses.map(g => `${g.code}(${g.areas.join("、")})`).join("、"),
+      }))}</div>`
+    : "";
   html += `<div class="card">
     <div class="cov-head"><h3 style="margin:0">${va_escape(t("sec_waste"))}</h3></div>
-    ${wasteLine}${atRisk}${noAg}
+    ${wasteLine}${atRisk}${geLine}${noAg}
     <div class="hint">${va_escape(s.baseline_note)}</div>
   </div>`;
+
+  /* ---- Cal-GETC 通识进度 ---- */
+  const ge = d.ge;
+  if (ge && ge.ok) {
+    const rows = ge.areas.map(a => {
+      const nm = t("ge_area_" + a.code) || a.code;
+      const st = a.done
+        ? `<span class="st ok">${va_escape(t("ge_done"))}</span>`
+        : `<span class="st warn">${va_escape(t("ge_missing", { n: a.need - a.courses.length }))}</span>`;
+      const used = a.courses.length
+        ? `<div class="hint">${va_escape(a.courses.join("、"))}</div>` : "";
+      return `<div class="req"><span class="code">${va_escape(a.code)}</span> ${va_escape(nm)} ${st}${used}</div>`;
+    }).join("");
+    const banner = ge.all_done ? `<div class="hint">${va_escape(t("ge_all_done"))}</div>` : "";
+    html += `<div class="card">
+      <div class="cov-head"><h3 style="margin:0">${va_escape(t("sec_ge"))}</h3></div>
+      ${banner}${rows}
+      <div class="hint">${va_escape(t("ge_note"))}</div>
+    </div>`;
+  }
 
   /* ---- 未完成的要求 ---- */
   if ((s.incomplete_requirements || []).length) {
@@ -231,5 +257,8 @@ window.__reRender = function () {
 };
 
 document.addEventListener("DOMContentLoaded", function () {
-  (window.ARTIC_READY || Promise.resolve()).then(va_init);
+  Promise.all([
+    window.ARTIC_READY || Promise.resolve(),
+    window.GE_READY || Promise.resolve(),
+  ]).then(va_init);
 });

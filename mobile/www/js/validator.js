@@ -234,6 +234,15 @@ function va_validatePlan(ccName, targetNames, majorQuery, plan, optReports) {
 
   wastedHighUnits = Math.round(wastedHighUnits * 10) / 10;
   const extraTerms = Math.round(wastedHighUnits / VA_UNITS_PER_TERM * 10) / 10;
+
+  /* Cal-GETC 通识检查：存疑课里能对上 GE 的直接认领，不再"存疑" */
+  const geIdx = (typeof GE_DATA !== "undefined" && GE_DATA && GE_DATA[ccName]) || null;
+  const geCourses = geIdx
+    ? atRiskCourses.filter(c => geIdx[c]).map(c => ({ code: c, areas: geIdx[c] }))
+    : [];
+  const atRiskNonGe = geIdx ? atRiskCourses.filter(c => !geIdx[c]) : atRiskCourses;
+  const geCheck = (typeof ge_checkPlan === "function")
+    ? ge_checkPlan(planSet, ccName) : { ok: false, reason: "no_lib" };
   return {
     cc_name: ccName,
     major_query: majorQuery,
@@ -245,7 +254,9 @@ function va_validatePlan(ccName, targetNames, majorQuery, plan, optReports) {
       transferable_n: allVerdicts.filter(v => v.transferable === true).length,
       denied_n: allVerdicts.filter(v => v.denied).length,
       wasted_courses: wastedCourses,       /* 实锤 */
-      at_risk_courses: atRiskCourses,      /* 存疑（可能是 GE） */
+      at_risk_courses: atRiskNonGe,       /* 存疑（排除已认领的 GE 课） */
+      ge_courses: geCourses,             /* 存疑课里对上 Cal-GETC 的 */
+      ge: geCheck,                       /* Cal-GETC 通识进度 */
       wasted_units: wastedHighUnits,
       unknown_unit_courses: unknownUnitCourses,
       extra_terms_estimate: extraTerms,
