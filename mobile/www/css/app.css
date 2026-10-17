@@ -304,6 +304,27 @@ details.more summary { font-size: 14px; color: var(--brand1); cursor: pointer; p
 #result > *:nth-child(5) { animation-delay: .28s; }
 #result > *:nth-child(n+6) { animation-delay: .32s; }
 
+/* ---------- 下一步引导卡 ---------- */
+.next-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  text-decoration: none; color: var(--ink);
+  border-radius: var(--radius); padding: 16px; margin: 12px 0;
+  box-shadow: var(--shadow);
+  border: 1.5px solid transparent;
+  background: linear-gradient(#fff, #fff) padding-box, var(--brand-grad) border-box;
+  animation: rise .45s var(--spring) both;
+  transition: transform .2s var(--spring), box-shadow .25s ease;
+}
+.next-card:active { transform: scale(.98); }
+.next-title { font-weight: 800; font-size: 15px; }
+.next-tip { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.next-arrow {
+  font-size: 24px; font-weight: 800; flex: none;
+  background: var(--brand-grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.illus.sm { width: 56px; height: 56px; margin: 0; flex: none; }
+.noagree { display: flex; gap: 14px; align-items: center; }
+
 /* ---------- 减弱动效 ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

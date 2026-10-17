@@ -97,9 +97,10 @@ function cmp_render(d) {
   let html = "";
   for (const tt of d.targets) {
     if (tt.status === "no_agreement") {
-      html += `<div class="card">
-        <div class="cov-head"><h3 style="margin:0">${cmp_escape(tt.target_name)}</h3>${cmp_badge("no_agreement")}</div>
-        <div class="hint">${cmp_escape(tt.note || "")}</div>
+      html += `<div class="card noagree">
+        <div class="illus sm">${illus("search")}</div>
+        <div><div class="cov-head"><h3 style="margin:0">${cmp_escape(tt.target_name)}</h3>${cmp_badge("no_agreement")}</div>
+        <div class="hint">${cmp_escape(tt.note || "")}</div></div>
       </div>`;
       continue;
     }
@@ -140,6 +141,12 @@ function cmp_render(d) {
       ${afterTransfer}
       <div class="meta">${cmp_escape(t("published_line", { d: tt.published_date || "?" }))}</div>
     </div>`;
+  }
+  if (html) {
+    html += `<a class="next-card" href="validate.html">`
+      + `<div><div class="next-title">${cmp_escape(t("next_title"))} · ${cmp_escape(t("next_val"))}</div>`
+      + `<div class="next-tip">${cmp_escape(t("next_val_tip"))}</div></div>`
+      + `<div class="next-arrow">→</div></a>`;
   }
   box.innerHTML = html || (`<div class="empty-card"><div class="illus">${illus("search")}</div>`
     + `<div class="empty-title">${cmp_escape(t("empty_title"))}</div>`

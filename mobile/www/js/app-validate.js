@@ -212,6 +212,13 @@ function va_render(d) {
   }
 
   html += `<div class="disclaimer">${va_escape(d.note)}</div>`;
+
+  if (html) {
+    html += `<a class="next-card" href="index.html">`
+      + `<div><div class="next-title">${va_escape(t("next_title"))} · ${va_escape(t("next_tag"))}</div>`
+      + `<div class="next-tip">${va_escape(t("next_tag_tip"))}</div></div>`
+      + `<div class="next-arrow">→</div></a>`;
+  }
   box.innerHTML = html || (`<div class="empty-card"><div class="illus">${illus("search")}</div>`
     + `<div class="empty-title">${va_escape(t("empty_title"))}</div>`
     + `<div class="empty-tip">${va_escape(t("empty_cmp_tip"))}</div></div>`);

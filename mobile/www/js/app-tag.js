@@ -149,7 +149,12 @@ function tag_render(r) {
       <div class="hint">${escapeHtml(t("kd_ucapp"))}${escapeHtml(info.uc_application || "—")}</div>
       ${info.tau_deadline ? `<div class="hint">${escapeHtml(t("kd_tau"))}${escapeHtml(info.tau_deadline)}</div>` : ""}
       <div class="meta">${srcLine}<br>${escapeHtml(r._disclaimer || "")}</div>
-    </div>`;
+    </div>
+    <a class="next-card" href="compare.html">
+      <div><div class="next-title">${escapeHtml(t("next_title"))} · ${escapeHtml(t("next_cmp"))}</div>
+      <div class="next-tip">${escapeHtml(t("next_cmp_tip"))}</div></div>
+      <div class="next-arrow">→</div>
+    </a>`;
   box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
