@@ -347,7 +347,7 @@ function cmp_verdict(d, chanceArr, gpa) {
     if (k) tagPart = t("verdict_tag", { n: k });
   }
   const text = t("verdict_main", { target: best.target_name, pct: best.coverage_pct, chance: chancePart })
-    + "，" + coursePart + (tagPart ? "；" + tagPart : "") + "。";
+    + t("verdict_sep1") + coursePart + (tagPart ? t("verdict_sep2") + tagPart : "") + t("verdict_end");
   return `<div class="card verdict"><div class="verdict-text">💡 ${cmp_escape(text)}</div></div>`;
 }
 
