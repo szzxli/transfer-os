@@ -60,7 +60,6 @@ KNOWN_CCC_IDS = {
     "Diablo Valley College": 114,
     "Orange Coast College": 74,
     "Pasadena City College": 49,
-    # Below: community records, not yet re-verified live.
     "Berkeley City College": 58,
     "College of Alameda": 111,
     "Laney College": 77,
@@ -71,6 +70,12 @@ KNOWN_CCC_IDS = {
     "Cypress College": 71,
     "Fullerton College": 134,
     "Golden West College": 55,
+    # Verified live 2026-10-16 via /api/institutions (batch 3: 20-CC expansion).
+    "Irvine Valley College": 124,
+    "Foothill College": 51,
+    "Saddleback College": 65,
+    "Santa Barbara City College": 92,
+    "El Camino College": 103,
 }
 
 # Receiving-institution IDs -- VERIFIED live 2026-10-15 via /api/institutions.
