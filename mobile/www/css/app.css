@@ -329,3 +329,20 @@ details.more summary { font-size: 14px; color: var(--brand1); cursor: pointer; p
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---- 对比页改版：分步输入 + 汇总表 + 折叠卡片 ---- */
+.step-tag { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; margin-bottom: 12px; }
+.step-n { width: 22px; height: 22px; border-radius: 50%; background: var(--brand-grad); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 13px; flex: none; }
+.btn-row { display: flex; gap: 10px; }
+.btn-row .btn { flex: 1; }
+.btn.ghost { background: #f1f0f5; color: #4b5563; box-shadow: none; animation: none; }
+.tbl-wrap { overflow-x: auto; margin: 0 -4px; }
+.sum-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sum-table th, .sum-table td { padding: 9px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.sum-table th { color: var(--muted); font-weight: 600; font-size: 12px; }
+.sum-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cmp-head { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.cmp-head .cov-num { margin-left: auto; }
+.exp-toggle { color: #7c3aed; font-size: 13px; white-space: nowrap; flex: none; }
+.cmp-body { margin-top: 10px; }

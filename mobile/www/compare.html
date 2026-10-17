@@ -26,21 +26,32 @@
 </div>
 
 <div class="page">
-  <div class="card">
+  <div class="card" id="step1">
+    <div class="step-tag"><span class="step-n">1</span><span data-i18n="step1_title"></span></div>
     <label class="f" for="cc" data-i18n="f_cc"></label>
     <select id="cc"></select>
 
+    <label class="f" for="major" data-i18n="f_major2"></label>
+    <input id="major" type="text" value="computer science" data-i18n-ph="ph_major2" autocomplete="off" list="majorList">
+    <datalist id="majorList"></datalist>
+    <div class="hint" data-i18n="f_major2_hint"></div>
+
+    <button class="btn" id="toStep2" onclick="cmp_toStep2()" data-i18n="btn_next"></button>
+  </div>
+
+  <div class="card" id="step2" hidden>
+    <div class="step-tag"><span class="step-n">2</span><span data-i18n="step2_title"></span></div>
     <label class="f"><span data-i18n="f_targets"></span> <span class="opt" data-i18n="f_targets_opt"></span></label>
     <div class="chips" id="targets"></div>
 
-    <label class="f" for="major" data-i18n="f_major2"></label>
-    <input id="major" type="text" value="computer science" data-i18n-ph="ph_major2" autocomplete="off">
-    <div class="hint" data-i18n="f_major2_hint"></div>
-
     <label class="f" for="courses"><span data-i18n="f_courses"></span> <span class="opt" data-i18n="f_courses_opt"></span></label>
-    <textarea id="courses" data-i18n-ph="ph_courses"></textarea>
+    <textarea id="courses" data-i18n-ph="ph_courses" oninput="cmp_countCourses()"></textarea>
+    <div class="hint" id="courseCount"></div>
 
-    <button class="btn" id="go" onclick="cmp_run()" data-i18n="btn_compare"></button>
+    <div class="btn-row">
+      <button class="btn ghost" id="backStep1" onclick="cmp_toStep1()" data-i18n="btn_back"></button>
+      <button class="btn" id="go" onclick="cmp_run()" data-i18n="btn_compare"></button>
+    </div>
   </div>
 
   <div id="result"></div>
