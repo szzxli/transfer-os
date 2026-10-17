@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Transfer OS · TAG 检查</title>
-<link rel="stylesheet" href="css/app.css?v=2">
+<link rel="stylesheet" href="css/app.css?v=21">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7c3aed">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -26,6 +26,26 @@
 </div>
 
 <div class="page">
+  <div class="card">
+    <div class="guide-video-cap" data-i18n="guide_video_cap" style="margin-top:0"></div>
+    <div class="video-wrap">
+      <iframe src="https://www.youtube-nocookie.com/embed/motJo04IMI4" title="TransferOS intro" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <details class="card scope">
+    <summary data-i18n="faq_title"></summary>
+    <div class="hint faq-list">
+      <div><b data-i18n="faq_q1"></b><br><span data-i18n="faq_a1"></span></div>
+      <div><b data-i18n="faq_q2"></b><br><span data-i18n="faq_a2"></span></div>
+      <div><b data-i18n="faq_q3"></b><br><span data-i18n="faq_a3"></span></div>
+      <div><b data-i18n="faq_q4"></b><br><span data-i18n="faq_a4"></span></div>
+      <div><b data-i18n="faq_q5"></b><br><span data-i18n="faq_a5"></span></div>
+      <div><b data-i18n="faq_q6"></b><br><span data-i18n="faq_a6"></span></div>
+      <div><b data-i18n="faq_q7"></b><br><span data-i18n="faq_a7"></span></div>
+    </div>
+  </details>
+
   <div class="card">
     <label class="f" for="school" data-i18n="f_school"></label>
     <select id="school"></select>
@@ -75,10 +95,10 @@
   <a href="validate.html"><span class="ico">📋</span><span data-i18n="nav_validate"></span></a>
 </nav>
 
-<script src="js/tag-data.js"></script>
-<script src="js/i18n.js"></script>
-<script src="js/tag-engine.js"></script>
-<script src="js/app-tag.js"></script>
+<script src="js/tag-data.js?v=21"></script>
+<script src="js/i18n.js?v=21"></script>
+<script src="js/tag-engine.js?v=21"></script>
+<script src="js/app-tag.js?v=21"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
