@@ -24,6 +24,16 @@ function cmp_init() {
   try {
     CMP_SAVED = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
   } catch (e) { CMP_SAVED = {}; }
+  /* 跨页打通：validate 页"去对比页分析"带过来的学校+课程+目标 */
+  try {
+    const ho = JSON.parse(localStorage.getItem("transferos_handoff") || "null");
+    if (ho && (ho.cc_name || ho.courses)) {
+      localStorage.removeItem("transferos_handoff");
+      if (ho.cc_name) CMP_SAVED.cc_name = ho.cc_name;
+      if (ho.courses) CMP_SAVED.courses = ho.courses;
+      if (Array.isArray(ho.targets) && ho.targets.length) CMP_SAVED.targets = ho.targets;
+    }
+  } catch (e) { /* 忽略 */ }
   if (CMP_SAVED.cc_name) cc.value = CMP_SAVED.cc_name;
   if (CMP_SAVED.major_query) document.getElementById("major").value = CMP_SAVED.major_query;
   if (CMP_SAVED.courses) document.getElementById("courses").value = CMP_SAVED.courses;
@@ -182,12 +192,9 @@ function cmp_summaryTable(d, chanceArr) {
   </div>`;
 }
 
-/* 🎯 待修清单：所有目标的缺失要求按 CC 课程聚合，
- * 按"一课多用"（能补上几个目标）排序——这就是工具的核心答案：
- * 选课（先修什么）、差异性（这门课哪个目标要、哪个不要）、少修白课。 */
-function cmp_actionPlan(d) {
+/* 待修聚合：所有目标的缺失要求按 CC 课程聚合，按"一课多用"排序 */
+function cmp_needList(d) {
   const need = new Map();  /* normCode -> {code, targets:[]} */
-  const waste = new Map(); /* normCode -> {code, targets:[]} */
   for (const tt of d.targets) {
     if (tt.status === "no_agreement") continue;
     for (const it of (tt.items || [])) {
@@ -200,6 +207,50 @@ function cmp_actionPlan(d) {
         if (!e.targets.includes(tt.target_name)) e.targets.push(tt.target_name);
       }
     }
+  }
+  return [...need.values()]
+    .sort((a, b) => b.targets.length - a.targets.length || (a.code < b.code ? -1 : 1));
+}
+
+/* 💡 一句话结论：把计算结果翻译成行动——主攻谁、先补哪门、TAG 保底几所 */
+function cmp_verdict(d, chanceArr, gpa) {
+  const ok = d.targets.filter(tt => tt.status !== "no_agreement");
+  if (!ok.length)
+    return `<div class="card verdict"><div class="verdict-text">💡 ${cmp_escape(t("verdict_no_target"))}</div></div>`;
+  const best = [...ok].sort((a, b) => b.coverage_pct - a.coverage_pct)[0];
+  const ch = chanceArr[d.targets.indexOf(best)];
+  const chancePart = (ch && ch.band)
+    ? t("verdict_chance", { level: t(ch.band === 3 ? "ch_high" : ch.band === 2 ? "ch_mid" : "ch_low") }) : "";
+  const need = cmp_needList(d);
+  const coursePart = need.length ? t("verdict_course", { code: need[0].code, n: need[0].targets.length }) : t("verdict_course_done");
+  let tagPart = "";
+  if (gpa != null && typeof TAG_CHANCE !== "undefined" && TAG_CHANCE.campuses) {
+    const q = String(d.major_query || "").toLowerCase().trim();
+    const k = TAG_CHANCE.campuses.filter(c => {
+      const hit = q && (c.excluded || []).find(e => {
+        const el = String(e).toLowerCase();
+        return el.includes(q) || q.includes(el);
+      });
+      return !hit && c.gpa[1] > 0 && gpa >= c.gpa[1];
+    }).length;
+    if (k) tagPart = t("verdict_tag", { n: k });
+  }
+  const text = t("verdict_main", { target: best.target_name, pct: best.coverage_pct, chance: chancePart })
+    + "，" + coursePart + (tagPart ? "；" + tagPart : "") + "。";
+  return `<div class="card verdict"><div class="verdict-text">💡 ${cmp_escape(text)}</div></div>`;
+}
+
+/* 🎯 待修清单：所有目标的缺失要求按 CC 课程聚合，
+ * 按"一课多用"（能补上几个目标）排序——这就是工具的核心答案：
+ * 选课（先修什么）、差异性（这门课哪个目标要、哪个不要）、少修白课。 */
+function cmp_actionPlan(d) {
+  const rows = cmp_needList(d)
+    .map(e => `<div class="req"><span class="code">${cmp_escape(e.code)}</span>`
+      + `<div class="hint">→ ${cmp_escape(e.targets.join("、"))} · ${cmp_escape(t("plan_need_n", { n: e.targets.length }))}</div></div>`)
+    .join("");
+  const waste = new Map(); /* normCode -> {code, targets:[]} */
+  for (const tt of d.targets) {
+    if (tt.status === "no_agreement") continue;
     for (const w of (tt.wasted || [])) {
       const k = cp_normCode(w.cc_code);
       if (!k) continue;
@@ -208,11 +259,6 @@ function cmp_actionPlan(d) {
       if (!e.targets.includes(tt.target_name)) e.targets.push(tt.target_name);
     }
   }
-  const rows = [...need.values()]
-    .sort((a, b) => b.targets.length - a.targets.length || (a.code < b.code ? -1 : 1))
-    .map(e => `<div class="req"><span class="code">${cmp_escape(e.code)}</span>`
-      + `<div class="hint">→ ${cmp_escape(e.targets.join("、"))} · ${cmp_escape(t("plan_need_n", { n: e.targets.length }))}</div></div>`)
-    .join("");
   const wasteHtml = [...waste.values()].map(e =>
     `<div class="risk">⚠️ ${cmp_escape(e.code)}${cmp_escape(t("waste_at", { t: e.targets.join("、") }))}</div>`
   ).join("");
@@ -339,7 +385,7 @@ function cmp_render(d) {
   const newestYear = d.targets.map(x => x.academic_year).filter(Boolean).sort().reverse()[0] || "";
   const gpa = cmp_gpa();
   const chanceArr = d.targets.map(tt => cmp_chanceFor(tt, d, gpa));
-  let html = cmp_summaryTable(d, chanceArr) + cmp_actionPlan(d) + cmp_chanceCard(d, chanceArr, gpa);
+  let html = cmp_verdict(d, chanceArr, gpa) + cmp_summaryTable(d, chanceArr) + cmp_actionPlan(d) + cmp_chanceCard(d, chanceArr, gpa);
   let idx = 0;
   for (const tt of d.targets) {
     if (tt.status === "no_agreement") {

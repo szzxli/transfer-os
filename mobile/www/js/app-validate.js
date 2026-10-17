@@ -103,6 +103,19 @@ function va_parsePlan(text) {
   return plan;
 }
 
+function va_handoff() {
+  /* 把本页的学校+课程+目标带到对比页，免重复录入 */
+  const ccName = document.getElementById("cc").value;
+  const targets = [...document.querySelectorAll("#targets .chip.on")].map(c => c.dataset.v);
+  const plan = va_parsePlan(document.getElementById("plan").value);
+  const courses = Object.values(plan).flat().join("\n");
+  try {
+    localStorage.setItem("transferos_handoff",
+      JSON.stringify({ cc_name: ccName, courses, targets }));
+  } catch (e) { /* 忽略 */ }
+  location.href = "compare.html";
+}
+
 function va_run() {
   const box = document.getElementById("result");
   const btn = document.getElementById("go");

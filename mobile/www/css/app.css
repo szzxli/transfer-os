@@ -258,6 +258,9 @@ textarea { min-height: 76px; resize: vertical; }
 .st.pass { background: var(--green); }
 .st.warn { background: var(--amber); }
 .st.fail { background: var(--red); }
+/* 💡 一句话结论：结果区顶部行动句 */
+.card.verdict { border-left: 4px solid var(--brand); background: linear-gradient(135deg, rgba(99,102,241,.08), rgba(34,211,238,.08)); }
+.verdict-text { font-size: 15px; font-weight: 700; line-height: 1.6; }
 .req .via { font-size: 13px; color: var(--green); margin-top: 2px; }
 .req .opts { font-size: 13px; color: #4b5563; margin-top: 2px; }
 
