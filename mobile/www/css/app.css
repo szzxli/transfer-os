@@ -266,6 +266,44 @@ textarea { min-height: 76px; resize: vertical; }
 details.more { margin-top: 8px; }
 details.more summary { font-size: 14px; color: var(--brand1); cursor: pointer; padding: 6px 0; font-weight: 600; }
 
+/* ---------- 插画 / 空态 / 占位 / 骨架屏 ---------- */
+.illus { width: 110px; height: 110px; margin: 0 auto 6px; }
+.illus svg { width: 100%; height: 100%; display: block; animation: float 4s ease-in-out infinite; }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+
+.ph-card {
+  border: 2px dashed var(--line); border-radius: var(--radius);
+  padding: 26px 18px; margin: 12px 0; text-align: center;
+  background: rgba(255, 255, 255, .6);
+  animation: rise .45s var(--spring) both;
+}
+.ph-title { font-size: 16px; font-weight: 800; margin-top: 8px; }
+.ph-tip { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+.empty-card {
+  background: var(--card); border-radius: var(--radius);
+  padding: 26px 18px; margin: 12px 0; text-align: center;
+  box-shadow: var(--shadow); border: 1px solid rgba(124, 58, 237, .07);
+  animation: rise .45s var(--spring) both;
+}
+.empty-title { font-size: 16px; font-weight: 800; margin-top: 8px; }
+.empty-tip { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+.skel {
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--gray-bg) 25%, #e2dcf6 50%, var(--gray-bg) 75%);
+  background-size: 200% 100%;
+  animation: skshimmer 1.4s ease-in-out infinite;
+}
+@keyframes skshimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* 结果 stagger：子卡片依次入场 */
+#result > *:nth-child(2) { animation-delay: .07s; }
+#result > *:nth-child(3) { animation-delay: .14s; }
+#result > *:nth-child(4) { animation-delay: .21s; }
+#result > *:nth-child(5) { animation-delay: .28s; }
+#result > *:nth-child(n+6) { animation-delay: .32s; }
+
 /* ---------- 减弱动效 ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

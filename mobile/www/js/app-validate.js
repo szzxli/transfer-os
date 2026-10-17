@@ -51,8 +51,17 @@ function va_init() {
   if (missing.length) {
     document.getElementById("result").innerHTML =
       `<div class="alert">[i18n] missing keys: ${va_escape(missing.join(", "))}</div>`;
+  } else {
+    va_placeholder();
   }
   applyI18n();
+}
+
+function va_placeholder() {
+  const box = document.getElementById("result");
+  box.innerHTML = `<div class="ph-card"><div class="illus">${illus("plan")}</div>`
+    + `<div class="ph-title">${va_escape(t("ph_ready_title"))}</div>`
+    + `<div class="ph-tip">${va_escape(t("ph_val_tip"))}</div></div>`;
 }
 
 function va_renderTargets() {
@@ -113,11 +122,13 @@ function va_run() {
     return;
   }
   if (!Object.keys(plan).length) {
-    box.innerHTML = `<div class="alert">${va_escape(t("empty_result"))}</div>`;
+    box.innerHTML = `<div class="empty-card"><div class="illus">${illus("plan")}</div>`
+      + `<div class="empty-title">${va_escape(t("empty_plan_title"))}</div>`
+      + `<div class="empty-tip">${va_escape(t("empty_plan_tip"))}</div></div>`;
     return;
   }
   btn.disabled = true;
-  box.innerHTML = `<div class="loading"><div class="spinner"></div>${va_escape(t("loading_cmp", { n: targets.length }))}</div>`;
+  box.innerHTML = skelHTML();
   setTimeout(() => {
     try {
       const d = va_validatePlan(ccName, targets, majorQuery, plan);
@@ -201,12 +212,15 @@ function va_render(d) {
   }
 
   html += `<div class="disclaimer">${va_escape(d.note)}</div>`;
-  box.innerHTML = html || `<div class="empty">${va_escape(t("empty_result"))}</div>`;
+  box.innerHTML = html || (`<div class="empty-card"><div class="illus">${illus("search")}</div>`
+    + `<div class="empty-title">${va_escape(t("empty_title"))}</div>`
+    + `<div class="empty-tip">${va_escape(t("empty_cmp_tip"))}</div></div>`);
   box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 window.__reRender = function () {
   if (lastValResult) va_render(lastValResult);
+  else if (!document.querySelector("#result .alert")) va_placeholder();
 };
 
 document.addEventListener("DOMContentLoaded", function () {

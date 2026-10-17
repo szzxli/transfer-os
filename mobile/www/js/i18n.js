@@ -18,6 +18,14 @@ err_prefix: "出错了：",
 alert_no_targets: "请至少选择一所目标学校。",
 alert_bad_gpa: "GPA 请输入 0–4.5 之间的数字。",
 empty_result: "无结果",
+ph_ready_title: "填好表单，点一下按钮",
+ph_tag_tip: "6 所 UC 的 TAG 规则，一次查完",
+ph_cmp_tip: "同一批课，看它在每所 UC 能抵什么",
+ph_val_tip: "粘贴你的选课计划，揪出浪费的课",
+empty_title: "这里空空如也",
+empty_cmp_tip: "换个课程代码或目标学校试试",
+empty_plan_title: "没解析出课程",
+empty_plan_tip: "检查一下学期标题和课程代码的格式",
 disclaimer_tag: "本工具为开源免费的转学规划参考，不构成录取保证。规则依据各校官网整理（见每份结果的数据来源链接），未核实项目请人工核对官网。TAG 申请窗口通常为每年 9 月 1–30 日，逾期不受理。",
 disclaimer_compare: "数据来自 ASSIST 公开 articulation 协议（2026-2027 学年），仅供规划参考，以学校官网为准。标“无协议”表示该组合暂无抓取到的协议，不代表学校没有要求，请到 ASSIST 官网核实。",
 /* ---------- TAG 表单 ---------- */
@@ -154,6 +162,14 @@ err_prefix: "Error: ",
 alert_no_targets: "Please select at least one target campus.",
 alert_bad_gpa: "Please enter a GPA between 0 and 4.5.",
 empty_result: "No results",
+ph_ready_title: "Fill in the form, then hit the button",
+ph_tag_tip: "Check TAG rules across 6 UC campuses at once",
+ph_cmp_tip: "See what the same courses cover at each UC",
+ph_val_tip: "Paste your course plan and spot wasted courses",
+empty_title: "Nothing here yet",
+empty_cmp_tip: "Try a different course code or campus",
+empty_plan_title: "No courses parsed",
+empty_plan_tip: "Check the term headers and course code format",
 disclaimer_tag: "This is a free open-source transfer planning reference, not an admission guarantee. Rules are compiled from official campus websites (see source links in each result); please verify unverified items on official sites. The TAG filing window is usually Sept 1–30 each year — late filings are not accepted.",
 disclaimer_compare: "Data comes from public ASSIST articulation agreements (2026–2027), for planning reference only — always verify on official websites. 'No agreement' means no agreement was found for that combination, not that the campus has no requirements; check ASSIST directly.",
 /* ---------- TAG 表单 ---------- */
@@ -290,6 +306,14 @@ err_prefix: "Error: ",
 alert_no_targets: "Selecciona al menos una universidad de destino.",
 alert_bad_gpa: "Ingresa un GPA entre 0 y 4.5.",
 empty_result: "Sin resultados",
+ph_ready_title: "Completa el formulario y pulsa el botón",
+ph_tag_tip: "Revisa las reglas TAG de 6 campus de la UC a la vez",
+ph_cmp_tip: "Mira qué cubren los mismos cursos en cada UC",
+ph_val_tip: "Pega tu plan de cursos y detecta cursos desperdiciados",
+empty_title: "Nada por aquí todavía",
+empty_cmp_tip: "Prueba con otro código de curso u otra universidad",
+empty_plan_title: "No se encontraron cursos",
+empty_plan_tip: "Revisa el formato de los trimestres y los códigos",
 disclaimer_tag: "Esta es una referencia gratuita y de código abierto para planificar tu transferencia, no una garantía de admisión. Las reglas se compilan de los sitios web oficiales (ver enlaces de fuente en cada resultado); verifica los ítems no verificados en los sitios oficiales. La ventana de solicitud TAG suele ser del 1 al 30 de septiembre — no se aceptan solicitudes tardías.",
 disclaimer_compare: "Datos de convenios de articulación públicos de ASSIST (2026–2027), solo de referencia — verifica siempre en los sitios oficiales. «Sin convenio» significa que no se encontró convenio para esa combinación, no que la universidad no tenga requisitos; consúltalo en ASSIST.",
 /* ---------- TAG 表单 ---------- */
@@ -419,6 +443,23 @@ v_st_ok: "Transferible", v_st_denied: "Denegado", v_st_unknown: "Sin verificar",
 var APP_LANG = "zh";
 var LANG_LABEL = { zh: "中文", en: "EN", es: "ES" };
 var HTML_LANG = { zh: "zh-CN", en: "en", es: "es" };
+
+/* ---------- 插画：内联 SVG，无外部资源，离线可用 ---------- */
+var ILLUS = {
+search: `<svg viewBox="0 0 120 120" fill="none" aria-hidden="true"><defs><linearGradient id="ilg-s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs><rect x="26" y="16" width="54" height="70" rx="9" fill="#ede9fe"/><rect x="35" y="29" width="36" height="6" rx="3" fill="#c4b5fd"/><rect x="35" y="41" width="36" height="6" rx="3" fill="#c4b5fd"/><rect x="35" y="53" width="24" height="6" rx="3" fill="#c4b5fd"/><rect x="35" y="65" width="30" height="6" rx="3" fill="#ddd6fe"/><circle cx="79" cy="73" r="21" fill="url(#ilg-s)"/><circle cx="79" cy="73" r="11.5" stroke="#fff" stroke-width="5"/><line x1="94" y1="88" x2="106" y2="100" stroke="url(#ilg-s)" stroke-width="7" stroke-linecap="round"/><circle cx="30" cy="100" r="4" fill="#06b6d4" opacity=".45"/><circle cx="102" cy="26" r="5" fill="#7c3aed" opacity=".22"/></svg>`,
+plan: `<svg viewBox="0 0 120 120" fill="none" aria-hidden="true"><defs><linearGradient id="ilg-p" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs><rect x="32" y="24" width="56" height="76" rx="10" fill="#e0f2fe"/><rect x="32" y="24" width="56" height="76" rx="10" stroke="url(#ilg-p)" stroke-width="3"/><rect x="48" y="14" width="24" height="15" rx="7" fill="url(#ilg-p)"/><circle cx="46" cy="46" r="7" fill="#dcfce7"/><path d="M43 46l2.5 2.5L49.5 44" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="58" y="43" width="26" height="6" rx="3" fill="#a5b4fc"/><circle cx="46" cy="64" r="7" fill="#dcfce7"/><path d="M43 64l2.5 2.5L49.5 62" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="58" y="61" width="26" height="6" rx="3" fill="#a5b4fc"/><circle cx="46" cy="82" r="7" fill="#fff7e8"/><rect x="58" y="79" width="18" height="6" rx="3" fill="#fcd34d"/><circle cx="98" cy="96" r="5" fill="#06b6d4" opacity=".35"/></svg>`,
+cap: `<svg viewBox="0 0 120 120" fill="none" aria-hidden="true"><defs><linearGradient id="ilg-c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs><ellipse cx="60" cy="102" rx="34" ry="6" fill="#ede9fe"/><polygon points="60,26 102,43 60,60 18,43" fill="url(#ilg-c)"/><path d="M38 51v17c0 9 44 9 44 0V51l-22 9z" fill="#c4b5fd"/><line x1="102" y1="43" x2="102" y2="70" stroke="#7c3aed" stroke-width="3" stroke-linecap="round"/><circle cx="102" cy="76" r="6" fill="#06b6d4"/><circle cx="24" cy="88" r="4" fill="#7c3aed" opacity=".3"/></svg>`
+};
+function illus(name) { return ILLUS[name] || ILLUS.search; }
+
+/* 骨架屏：加载时的占位 shimmer 卡片 */
+function skelHTML() {
+  return `<div class="card"><div class="skel" style="height:24px;width:55%"></div>`
+    + `<div class="skel" style="height:14px;margin-top:12px"></div>`
+    + `<div class="skel" style="height:14px;margin-top:8px;width:80%"></div></div>`
+    + `<div class="card"><div class="skel" style="height:24px;width:40%"></div>`
+    + `<div class="skel" style="height:14px;margin-top:12px;width:90%"></div></div>`;
+}
 
 /* 取文案：函数则调用并传参 */
 function t(key, params) {

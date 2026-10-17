@@ -25,6 +25,14 @@ function tag_init() {
     }
   } catch (e) { /* 忽略 */ }
   applyI18n();
+  tag_placeholder();
+}
+
+function tag_placeholder() {
+  const box = document.getElementById("result");
+  box.innerHTML = `<div class="ph-card"><div class="illus">${illus("cap")}</div>`
+    + `<div class="ph-title">${escapeHtml(t("ph_ready_title"))}</div>`
+    + `<div class="ph-tip">${escapeHtml(t("ph_tag_tip"))}</div></div>`;
 }
 
 function escapeHtml(s) {
@@ -61,7 +69,7 @@ function tag_run() {
     return;
   }
   btn.disabled = true;
-  box.innerHTML = `<div class="loading"><div class="spinner"></div>${escapeHtml(t("loading_tag"))}</div>`;
+  box.innerHTML = skelHTML();
   setTimeout(() => {
     try {
       const profile = {
@@ -147,6 +155,7 @@ function tag_render(r) {
 
 window.__reRender = function () {
   if (lastTagResult) tag_render(lastTagResult);
+  else tag_placeholder();
 };
 
 document.addEventListener("DOMContentLoaded", tag_init);

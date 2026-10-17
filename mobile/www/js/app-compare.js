@@ -33,6 +33,14 @@ function cmp_init() {
     }
   } catch (e) { /* 忽略 */ }
   applyI18n();
+  cmp_placeholder();
+}
+
+function cmp_placeholder() {
+  const box = document.getElementById("result");
+  box.innerHTML = `<div class="ph-card"><div class="illus">${illus("search")}</div>`
+    + `<div class="ph-title">${cmp_escape(t("ph_ready_title"))}</div>`
+    + `<div class="ph-tip">${cmp_escape(t("ph_cmp_tip"))}</div></div>`;
 }
 
 function cmp_renderTargets() {
@@ -63,7 +71,7 @@ function cmp_run() {
     return;
   }
   btn.disabled = true;
-  box.innerHTML = `<div class="loading"><div class="spinner"></div>${cmp_escape(t("loading_cmp", { n: targets.length }))}</div>`;
+  box.innerHTML = skelHTML();
   setTimeout(() => {
     try {
       const d = cp_compare(ccName, majorQuery, targets, courses);
@@ -133,12 +141,15 @@ function cmp_render(d) {
       <div class="meta">${cmp_escape(t("published_line", { d: tt.published_date || "?" }))}</div>
     </div>`;
   }
-  box.innerHTML = html || `<div class="empty">${cmp_escape(t("empty_result"))}</div>`;
+  box.innerHTML = html || (`<div class="empty-card"><div class="illus">${illus("search")}</div>`
+    + `<div class="empty-title">${cmp_escape(t("empty_title"))}</div>`
+    + `<div class="empty-tip">${cmp_escape(t("empty_cmp_tip"))}</div></div>`);
   box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 window.__reRender = function () {
   if (lastCmpResult) cmp_render(lastCmpResult);
+  else cmp_placeholder();
 };
 
 document.addEventListener("DOMContentLoaded", function () {
