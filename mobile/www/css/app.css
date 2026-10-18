@@ -271,6 +271,10 @@ textarea { min-height: 76px; resize: vertical; }
   background: #eef2f7; border: 1px solid #dbe3ec; border-radius: 999px;
   padding: 2px 8px; margin-left: 4px; vertical-align: middle; white-space: nowrap;
 }
+/* 未识别课程提示 */
+.unrec-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 0; border-bottom: 1px solid #eee; }
+.unrec-row:last-child { border-bottom: none; }
+.chip.sug { border-color: var(--brand1); color: var(--brand1); font-weight: 700; }
 
 /* ---------- 加载 / 错误 / 空态 ---------- */
 .loading { text-align: center; padding: 28px 0; color: var(--muted); }
@@ -455,3 +459,21 @@ details.more summary { font-size: 14px; color: var(--brand1); cursor: pointer; p
 .cmp-head .cov-num { margin-left: auto; }
 .exp-toggle { color: #7c3aed; font-size: 13px; white-space: nowrap; flex: none; }
 .cmp-body { margin-top: 10px; }
+
+/* 课程雷达：高亮交互 */
+.course-pool { display: flex; flex-wrap: wrap; gap: 8px; }
+.cp-chip {
+  padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--line, #ddd);
+  background: #fff; font-family: var(--mono, monospace); font-size: 13px;
+  cursor: pointer; transition: all .15s ease;
+}
+.cp-chip.active {
+  border-color: #16a34a; background: #f0fdf4; color: #15803d;
+  box-shadow: 0 0 0 2px rgba(22,163,74,.2); font-weight: 700;
+}
+.req { transition: opacity .15s ease, background .15s ease; border-left: 3px solid transparent; }
+.req.lit {
+  border-left-color: #16a34a; background: #f0fdf4;
+  box-shadow: 0 0 12px rgba(22,163,74,.25);
+}
+#result.filtering .req:not(.lit) { opacity: .4; }
