@@ -803,12 +803,53 @@ function cmp_fixCourse(i) {
   cmp_run();
 }
 
+/* 课程雷达：点一门 CC 课，高亮所有靠它覆盖的 UC 要求 */
+function cmp_coursePool(d) {
+  const seen = new Set();
+  const courses = (d.student_courses || []).filter(c => {
+    if (!c || !c.includes(" ")) return false;  // 只留带空格的规范形，去重扁平形
+    const flat = c.replace(/ /g, "");
+    if (seen.has(flat)) return false;
+    seen.add(flat);
+    return true;
+  });
+  if (!courses.length) return "";
+  const chips = courses.map(c =>
+    `<button type="button" class="cp-chip" data-code="${cmp_escape(c)}"`
+    + ` onmouseenter="cmp_highlight(this.dataset.code)"`
+    + ` onmouseleave="cmp_highlight(null)"`
+    + ` onclick="cmp_toggleHl(this.dataset.code)">${cmp_escape(c)}</button>`
+  ).join("");
+  return `<div class="card"><div class="section-title">📡 ${cmp_escape(t("pool_title"))}</div>`
+    + `<div class="hint" style="margin-bottom:8px">${cmp_escape(t("pool_hint"))}</div>`
+    + `<div class="course-pool">${chips}</div></div>`;
+}
+
+let _cmpHl = null;
+function cmp_highlight(code) {
+  _cmpHl = code;
+  const flat = code ? code.replace(/ /g, "") : null;
+  const box = document.getElementById("result");
+  box.classList.toggle("filtering", !!code);
+  box.querySelectorAll(".req[data-via]").forEach(el => {
+    const hit = !!flat && el.dataset.via.split("|").some(v => v.replace(/ /g, "") === flat);
+    el.classList.toggle("lit", hit);
+  });
+  document.querySelectorAll(".cp-chip").forEach(ch => {
+    ch.classList.toggle("active", !!code && ch.dataset.code === code);
+  });
+}
+function cmp_toggleHl(code) {
+  cmp_highlight(_cmpHl === code ? null : code);  // 手机上点按切换
+}
+
 function cmp_render(d) {
   const box = document.getElementById("result");
   const newestYear = d.targets.map(x => x.academic_year).filter(Boolean).sort().reverse()[0] || "";
   const gpa = cmp_gpa();
   const chanceArr = d.targets.map(tt => cmp_chanceFor(tt, d, gpa));
   let html = cmp_verdict(d, chanceArr, gpa) + cmp_unrecCard() + cmp_summaryTable(d, chanceArr) + cmp_actionPlan(d) + cmp_chanceCard(d, chanceArr, gpa);
+  html += cmp_coursePool(d);
   let idx = 0;
   for (const tt of d.targets) {
     if (tt.status === "no_agreement") {
@@ -827,7 +868,9 @@ function cmp_render(d) {
         extra = `<div class="opts">${cmp_escape(t("d_fill", { options: i.options_display || i.options.join(" / ") }))}</div>`;
       else if (i.status === "no_articulation")
         extra = `<div class="opts">${cmp_escape(i.detail)}</div>`;
-      return `<div class="req">
+      const viaAttr = (i.via && i.via.length)
+        ? ` data-via="${cmp_escape(i.via.map(v => cp_normCode(v)).join("|"))}"` : "";
+      return `<div class="req"${viaAttr}>
         <span class="code">${cmp_escape(i.target_code)}</span>${cmp_badge(i.status)}
         <div class="ttl">${cmp_escape(i.target_title || "")}</div>${extra}
       </div>`;
