@@ -35,6 +35,17 @@
       <img src="https://i.ytimg.com/vi/motJo04lMl4/hqdefault.jpg" alt="TransferOS intro video" loading="lazy">
       <span class="video-play">▶ <span data-i18n="watch_yt"></span></span>
     </a>
+    <div id="resume-slot"></div>
+  </div>
+
+  <div class="card" id="demo-pods">
+    <div class="section-title">⚡ <span data-i18n="demo_title"></span></div>
+    <div class="hint" style="margin-bottom:8px"><span data-i18n="demo_hint"></span></div>
+    <div class="demo-row">
+      <button class="demo-pod" onclick="demoGo('smc')">🍎 SMC → UCLA <b>CS</b></button>
+      <button class="demo-pod" onclick="demoGo('pcc')">🌴 PCC → UCLA <b>Econ</b></button>
+      <button class="demo-pod" onclick="demoGo('da')">💻 De Anza → UCB <b>CS</b></button>
+    </div>
   </div>
 
   <a class="card tool-card" href="tag.html">
@@ -78,11 +89,43 @@
 
 <script src="js/i18n.js?v=26"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () { applyI18n(); });
+document.addEventListener("DOMContentLoaded", function () { applyI18n(); idx_resume(); });
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('sw.js').catch(function () {});
   });
+}
+/* 断点恢复：读上次对比表单，老用户首页直接继续 */
+function idx_resume() {
+  var slot = document.getElementById("resume-slot");
+  if (!slot) return;
+  var s = null;
+  try { s = JSON.parse(localStorage.getItem("transferos_cmp_form") || "null"); } catch (e) {}
+  if (!s || !s.cc_name) return;
+  var tgts = (s.targets || []).join(" / ");
+  var esc = function (x) { return String(x == null ? "" : x).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  slot.innerHTML = '<a class="resume-card" href="compare.html?autorun=1">'
+    + '<div class="resume-t">↩ ' + esc(t("resume_title")) + '</div>'
+    + '<div class="resume-d">' + esc(s.cc_name) + ' → ' + esc(tgts || s.major_query || "") + '</div>'
+    + '</a>';
+}
+/* 一键 Demo：写 handoff 直达对比页自动跑 */
+var DEMOS = {
+  smc: { cc_name: "Santa Monica College", major_query: "Computer Science",
+         targets: ["UCLA", "UC Berkeley"],
+         courses: "MATH 7\nMATH 8\nMATH 11\nMATH 13\nMATH 15" },
+  pcc: { cc_name: "Pasadena City College", major_query: "Business Economics",
+         targets: ["UCLA", "UC Irvine"],
+         courses: "ACCT 001A\nACCT 001B\nMATH 005A\nMATH 005B" },
+  da:  { cc_name: "De Anza College", major_query: "Computer Science",
+         targets: ["UC Berkeley", "UCLA"],
+         courses: "CIS 22C\nCIS 26B\nMATH 2A\nMATH 2B" },
+};
+function demoGo(k) {
+  var d = DEMOS[k];
+  if (!d) return;
+  try { localStorage.setItem("transferos_handoff", JSON.stringify(d)); } catch (e) {}
+  location.href = "compare.html?autorun=1";
 }
 </script>
 </body>
