@@ -78,6 +78,7 @@
   </details>
 
   <div class="disclaimer" data-i18n="disclaimer_home"></div>
+  <div style="text-align:center;margin-top:10px"><a href="#" id="buglink" style="font-size:13px;color:#7c3aed" data-i18n="report_bug"></a></div>
 </div>
 
 <nav class="tabbar">
@@ -89,7 +90,30 @@
 
 <script src="js/i18n.js?v=26"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () { applyI18n(); idx_resume(); });
+/* One-click bug report: prefills environment into a GitHub issue */
+function idx_buglink() {
+  var el = document.getElementById("buglink");
+  if (!el) return;
+  el.addEventListener("click", function (e) {
+    e.preventDefault();
+    var ua = navigator.userAgent || "?";
+    var ls = "?";
+    try {
+      var b = 0;
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        b += (k.length + (localStorage.getItem(k) || "").length) * 2;
+      }
+      ls = "~" + (b / 1024).toFixed(1) + " KB";
+    } catch (err) {}
+    var body = "## Environment\n- App version: v29 (PWA)\n- User agent: " + ua
+      + "\n- localStorage used: " + ls
+      + "\n\n## What happened\n\n\n## Steps to reproduce\n\n\n## Expected\n";
+    location.href = "https://github.com/szzxli/transfer-os/issues/new?title="
+      + encodeURIComponent("[bug] ") + "&body=" + encodeURIComponent(body);
+  });
+}
+document.addEventListener("DOMContentLoaded", function () { applyI18n(); idx_resume(); idx_buglink(); });
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('sw.js').catch(function () {});
