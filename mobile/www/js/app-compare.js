@@ -442,6 +442,8 @@ function cmp_run() {
   }
   btn.disabled = true;
   box.innerHTML = skelHTML();
+  _cmpExcluded = new Set();
+  _cmpFullCourses = courses.map(c => cp_normCode(c)).filter(Boolean);
   setTimeout(() => {
     try {
       const d = cp_compare(ccName, majorQuery, targets, courses);
@@ -843,13 +845,100 @@ function cmp_toggleHl(code) {
   cmp_highlight(_cmpHl === code ? null : code);  // 手机上点按切换
 }
 
+/* What-If 模拟器：勾掉课程，实时看覆盖率变化（只谈覆盖率，不编概率） */
+let _cmpExcluded = new Set();
+let _cmpFullCourses = [];
+function cmp_whatifCard() {
+  const seen = new Set();
+  const courses = _cmpFullCourses.filter(c => {
+    if (!c || !c.includes(" ")) return false;
+    const f = c.replace(/ /g, "");
+    if (seen.has(f)) return false;
+    seen.add(f); return true;
+  });
+  if (!courses.length) return "";
+  const rows = courses.map(c => {
+    const off = _cmpExcluded.has(c);
+    return `<label class="wi-row"><input type="checkbox" data-wi="${cmp_escape(c)}"${off ? " checked" : ""} onchange="cmp_whatifToggle(this)">`
+      + `<span class="code">${cmp_escape(c)}</span>`
+      + (off ? `<span class="tag off">excluded</span>` : "") + `</label>`;
+  }).join("");
+  return `<div class="card"><div class="section-title">🔬 ${cmp_escape(t("wi_title"))}</div>`
+    + `<div class="hint" style="margin-bottom:8px">${cmp_escape(t("wi_hint"))}</div>`
+    + `<div class="wi-list">${rows}</div></div>`;
+}
+function cmp_whatifToggle(el) {
+  const code = el.dataset.wi;
+  if (el.checked) _cmpExcluded.add(code); else _cmpExcluded.delete(code);
+  const ccName = document.getElementById("cc").value;
+  const majorQuery = document.getElementById("major").value.trim() || "computer science";
+  const targets = [...document.querySelectorAll("#targets .chip.on")].map(c => c.dataset.v);
+  const courses = _cmpFullCourses.filter(c => !_cmpExcluded.has(c));
+  try {
+    const d = cp_compare(ccName, majorQuery, targets, courses);
+    lastCmpResult = d;
+    cmp_render(d);
+  } catch (e) { /* 保持旧结果 */ }
+}
+
+/* 黄金路径：贪心集合覆盖，最少 CC 课覆盖最多 UC 要求 */
+function cmp_goldenPath(d) {
+  const reqs = [];
+  for (const tt of d.targets) {
+    if (tt.status === "no_agreement") continue;
+    for (const it of (tt.items || [])) {
+      if (it.status === "no_articulation") continue;
+      const cands = it.status === "covered" ? it.via : it.options;
+      if (!cands || !cands.length) continue;
+      reqs.push({
+        key: tt.target_name + "|" + it.target_code,
+        target: tt.target_name, code: it.target_code,
+        cands: [...new Set(cands.map(c => cp_normCode(c)).filter(Boolean))],
+      });
+    }
+  }
+  if (!reqs.length) return "";
+  const byKey = Object.fromEntries(reqs.map(r => [r.key, r]));
+  const uncovered = new Set(reqs.map(r => r.key));
+  const used = new Set();
+  const path = [];
+  while (uncovered.size) {
+    const cov = {};
+    for (const r of reqs) {
+      if (!uncovered.has(r.key)) continue;
+      for (const c of r.cands) (cov[c] = cov[c] || []).push(r.key);
+    }
+    let best = null, bestKeys = [];
+    for (const c of Object.keys(cov)) {
+      if (used.has(c)) continue;
+      if (cov[c].length > bestKeys.length) { best = c; bestKeys = cov[c]; }
+    }
+    if (!best) break;
+    used.add(best);
+    bestKeys.forEach(k => uncovered.delete(k));
+    path.push({ course: best, covers: bestKeys.map(k => byKey[k]) });
+  }
+  if (!path.length) return "";
+  const haveFlat = new Set(_cmpFullCourses.map(c => c.replace(/ /g, "")));
+  const rows = path.map((p, i) => {
+    const has = haveFlat.has(p.course.replace(/ /g, ""));
+    const covList = p.covers.map(r => `${cmp_escape(r.target)} ${cmp_escape(r.code)}`).join("、");
+    return `<div class="gp-row"><span class="gp-num">${i + 1}</span>`
+      + `<span class="code">${cmp_escape(p.course)}</span>`
+      + (has ? `<span class="tag have">✓</span>` : `<span class="tag need">+${p.covers.length}</span>`)
+      + `<div class="hint">${covList}</div></div>`;
+  }).join("");
+  return `<div class="card"><div class="section-title">🏆 ${cmp_escape(t("gp_title"))}</div>`
+    + `<div class="hint" style="margin-bottom:8px">${cmp_escape(t("gp_hint"))}</div>${rows}</div>`;
+}
+
 function cmp_render(d) {
   const box = document.getElementById("result");
   const newestYear = d.targets.map(x => x.academic_year).filter(Boolean).sort().reverse()[0] || "";
   const gpa = cmp_gpa();
   const chanceArr = d.targets.map(tt => cmp_chanceFor(tt, d, gpa));
   let html = cmp_verdict(d, chanceArr, gpa) + cmp_unrecCard() + cmp_summaryTable(d, chanceArr) + cmp_actionPlan(d) + cmp_chanceCard(d, chanceArr, gpa);
-  html += cmp_coursePool(d);
+  html += cmp_coursePool(d) + cmp_whatifCard() + cmp_goldenPath(d);
   let idx = 0;
   for (const tt of d.targets) {
     if (tt.status === "no_agreement") {
