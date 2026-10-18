@@ -215,6 +215,7 @@ function cmp_init() {
     if (ho && (ho.cc_name || ho.courses)) {
       localStorage.removeItem("transferos_handoff");
       if (ho.cc_name) CMP_SAVED.cc_name = ho.cc_name;
+      if (ho.major_query) CMP_SAVED.major_query = ho.major_query;
       if (ho.courses) CMP_SAVED.courses = ho.courses;
       if (Array.isArray(ho.targets) && ho.targets.length) CMP_SAVED.targets = ho.targets;
     }
@@ -234,6 +235,13 @@ function cmp_init() {
   try {
     if (!localStorage.getItem(TOUR_KEY) && !CMP_SAVED.major_query) {
       setTimeout(tour_start, 900);
+    }
+  } catch (e) { /* 忽略 */ }
+  /* 首页断点恢复 / Demo 一键直达：带 autorun 参数自动跑一次对比 */
+  try {
+    if (new URLSearchParams(location.search).get("autorun") === "1"
+        && CMP_SAVED.cc_name && (CMP_SAVED.targets || []).length) {
+      setTimeout(function () { cmp_run(); }, 400);
     }
   } catch (e) { /* 忽略 */ }
 }
