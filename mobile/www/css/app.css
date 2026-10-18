@@ -491,3 +491,20 @@ details.more summary { font-size: 14px; color: var(--brand1); cursor: pointer; p
 .gp-row .tag.have { background: #f0fdf4; color: #15803d; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
 .gp-row .tag.need { background: #eff6ff; color: #1d4ed8; font-size: 12px; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
 .gp-row .hint { flex-basis: 100%; margin-top: 2px; }
+
+/* 首页断点恢复卡 */
+.resume-card { display: block; margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+  background: linear-gradient(135deg, #f5f3ff, #ede9fe); border: 1px solid #c4b5fd; text-decoration: none; }
+.resume-t { font-weight: 700; color: #6d28d9; font-size: 14px; }
+.resume-d { color: #4c1d95; font-size: 13px; margin-top: 4px; }
+
+/* 一键 Demo */
+.demo-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.demo-pod { padding: 10px 14px; border-radius: 999px; border: 1.5px solid #c4b5fd;
+  background: #faf5ff; font-size: 13px; cursor: pointer; transition: transform .12s ease; }
+.demo-pod:active { transform: scale(.94); }
+.demo-pod b { color: #6d28d9; }
+
+/* 底部导航原生手感 */
+.tabbar a { -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent;
+  touch-action: manipulation; user-select: none; -webkit-user-select: none; }
