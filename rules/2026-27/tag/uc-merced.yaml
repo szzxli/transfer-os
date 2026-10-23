@@ -3,7 +3,7 @@ program: TAG
 academic_year: 2026-27
 admission_cycle: Fall 2027
 source: https://admissions.ucmerced.edu/transfer/tag
-verified_date: 2026-10-15
+verified_date: 2026-10-23
 requirements:
   min_gpa:
     school_of_engineering: 3.0
@@ -38,6 +38,26 @@ requirements:
   tag_window: September 1-30
   uc_application_deadline: November 30
   spring_tag: UC Merced also offers a spring TAG option
+  adt_guarantee:
+    announced: 2026-10-20
+    source: https://news.ucmerced.edu/news/2026/transferring-community-college-uc-merced-just-got-easier
+    requirements_source: https://admissions.ucmerced.edu/transfer/requirements
+    summary: UC Merced joined the Associate Degree for Transfer (ADT) program (announced with the CCC Chancellor's Office). Students applying to UC Merced for fall 2027 who complete an approved ADT by summer 2027 can transfer into the corresponding major with guaranteed admission and junior standing, and earn the bachelor's degree with no more than 60 additional semester units at UC Merced, provided all program conditions are met. Includes a $4,000 annual scholarship for up to two consecutive academic years while maintaining good standing and eligibility.
+    requirements:
+      - Complete an approved ADT in the same major applied to at UC Merced
+      - Meet UC Merced's junior-level transfer GPA requirement
+      - Indicate on the UC application that they plan to complete an ADT
+      - Complete the ADT before enrolling at UC Merced
+    initial_pathways:
+      - Anthropology AA-T to Anthropology, B.A.
+      - Biology AS-T to Biological Sciences, B.A. (incl. Education emphasis)
+      - Biology AS-T to Biological Sciences, B.S. (Developmental Biology, Education, General Biology, Human Biology, Microbiology and Immunology, Molecular and Cell Biology emphases)
+      - Elementary Teacher Education AA-T to Liberal Studies, B.A.
+      - History AA-T to History, B.A. (incl. Teaching Social Science emphasis)
+      - Social Justice Studies AA-T to Critical Race and Ethnic Studies, B.A. (incl. Teaching Social Science emphasis)
+      - Political Science AA-T to Political Science, B.A. (American Politics, Comparative Politics, International Relations, Law and Policy emphases)
+    more_pathways: Additional pathways expected; check the official admissions page for the current list.
   tag_major_must_match_uc_app_major: unknown
   notes:
     - Among the six TAG campuses, Merced has the lowest GPA thresholds and the only spring TAG option.
+    - UC Merced joined the ADT program (announced 2026-10-20): approved ADT holders get guaranteed admission with junior standing + $4,000/yr scholarship (up to 2 years) for fall 2027 entry; see adt_guarantee.
