@@ -190,7 +190,7 @@ function va_render(d) {
 
   /* ---- 浪费汇总卡 ---- */
   const wasteLine = s.wasted_courses.length
-    ? `<div class="cov-num" style="color:#c0392b">${s.wasted_units}<span style="font-size:14px;color:#888"> units</span></div>
+    ? `<div class="cov-num" style="color:#e11d48">${s.wasted_units}<span style="font-size:14px;color:#888"> units</span></div>
        <div class="hint">${va_escape(t("v_wasted_units_line", { u: s.wasted_units, t: s.extra_terms_estimate }))}</div>
        <div class="risk">⚠️ ${va_escape(s.wasted_courses.join("、"))}</div>`
     : `<div class="hint">${va_escape(t("v_no_waste"))}</div>`;

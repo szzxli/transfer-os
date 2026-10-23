@@ -151,10 +151,10 @@ function tag_stName(s) {
 function tag_scoreRing(score) {
   const pct = Math.max(0, Math.min(100, score)) / 100;
   const C = 2 * Math.PI * 34;
-  const color = score >= 80 ? "#1a7f37" : score >= 60 ? "#b7791f" : "#c62828";
+  const color = score >= 80 ? "#16a34a" : score >= 60 ? "#d97706" : "#e11d48";
   return `<div class="score-ring">
     <svg width="84" height="84" viewBox="0 0 84 84">
-      <circle cx="42" cy="42" r="34" fill="none" stroke="#e5e7eb" stroke-width="9"/>
+      <circle cx="42" cy="42" r="34" fill="none" stroke="#e3e4da" stroke-width="9"/>
       <circle cx="42" cy="42" r="34" fill="none" stroke="${color}" stroke-width="9"
         stroke-linecap="round" stroke-dasharray="${(pct * C).toFixed(1)} ${C.toFixed(1)}"/>
     </svg>
