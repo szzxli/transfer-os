@@ -18,6 +18,8 @@ const VA_KEYS = [
   "v_missing_partners", "v_satisfies", "v_partial_satisfies", "v_and_incomplete",
   "v_denied_at", "v_no_agreement_line",
   "v_st_ok", "v_st_denied", "v_st_unknown",
+  "alert_no_cc", "fin_save_btn", "fin_saved", "fin_home", "fin_note",
+  "calgetc_link", "assist_link",
 ];
 
 function va_escape(s) {
@@ -130,6 +132,10 @@ function va_run() {
       { cc_name: ccName, major_query: majorQuery, targets, plan: planText }));
   } catch (e) { /* 忽略 */ }
 
+  if (!ccName) {
+    box.innerHTML = `<div class="alert">${va_escape(t("alert_no_cc"))}</div>`;
+    return;
+  }
   if (!targets.length) {
     box.innerHTML = `<div class="alert">${va_escape(t("alert_no_targets"))}</div>`;
     return;
@@ -152,6 +158,23 @@ function va_run() {
     }
     btn.disabled = false;
   }, 60);
+}
+
+/* 收尾：把本次校验结果摘要存到本机（只存本设备） */
+function va_saveResult(btn) {
+  if (!lastValResult) return;
+  const s = lastValResult.summary || {};
+  try {
+    localStorage.setItem("transferos_val_result", JSON.stringify({
+      ts: Date.now(),
+      cc_name: document.getElementById("cc").value,
+      major_query: document.getElementById("major").value.trim(),
+      targets: lastValResult.targets || [],
+      wasted_units: s.wasted_units,
+      wasted_courses: s.wasted_courses || [],
+    }));
+  } catch (e) { /* 忽略 */ }
+  if (btn) { btn.disabled = true; btn.textContent = t("fin_saved"); }
 }
 
 function va_badge(v) {
@@ -209,6 +232,7 @@ function va_render(d) {
       <div class="cov-head"><h3 style="margin:0">${va_escape(t("sec_ge"))}</h3></div>
       ${banner}${rows}${ucsdWarn}
       <div class="hint">${va_escape(t("ge_note"))}</div>
+      <div class="hint" style="margin-top:6px"><a href="https://icas-ca.org/cal-getc/" target="_blank" rel="noopener">${va_escape(t("calgetc_link"))}</a></div>
     </div>`;
   }
 
@@ -259,6 +283,13 @@ function va_render(d) {
       + `<div><div class="next-title">${va_escape(t("next_title"))} · ${va_escape(t("next_tag"))}</div>`
       + `<div class="next-tip">${va_escape(t("next_tag_tip"))}</div></div>`
       + `<div class="next-arrow">→</div></a>`;
+    html += `<div class="card">
+      <div class="btn-row">
+        <button type="button" class="btn ghost" onclick="va_saveResult(this)">${va_escape(t("fin_save_btn"))}</button>
+        <a class="btn" style="text-align:center;text-decoration:none" href="https://zhuanuc.com" target="_blank" rel="noopener">${va_escape(t("fin_home"))}</a>
+      </div>
+      <div class="hint" style="margin-top:8px">${va_escape(t("fin_note"))}</div>
+    </div>`;
   }
   box.innerHTML = html || (`<div class="empty-card"><div class="illus">${illus("search")}</div>`
     + `<div class="empty-title">${va_escape(t("empty_title"))}</div>`

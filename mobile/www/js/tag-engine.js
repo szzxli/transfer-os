@@ -125,12 +125,30 @@ function te_resolveGpa(gpaRule, college, major) {
   return [null, null];
 }
 
+/* 显示层人话化：规则键名（如 all_majors、college_of_engineering）不直接给用户看 */
+function te_humanMatched(m) {
+  if (m === null || m === undefined) return m;
+  if (m === "统一要求") return t("gpa_scope_uniform");
+  return String(m).split(" / ").map(part =>
+    te_norm(part) === "all_majors" ? t("gpa_scope_all") : part.replace(/_/g, " ")
+  ).join(" / ");
+}
+
+function te_humanUnknown(path) {
+  const seg = String(path).split(".").pop() || "";
+  if (seg === "tag_major_must_match_uc_app_major") return t("label_major_match");
+  if (seg.indexOf("excluded_majors") === 0) return t("unk_excluded");
+  if (seg === "unit_cap_senior_standing") return t("unk_unit_cap");
+  return seg.replace(/_/g, " ");
+}
+
 function te_checkGpa(requirements, profile) {
   const L = t("label_gpa");
   const gpaRule = requirements.min_gpa !== undefined ? requirements.min_gpa : requirements.min_gpa_by_major;
   if (gpaRule === undefined || gpaRule === null || te_isUnknown(gpaRule))
     return te_makeCheck("gpa", L, TE_SKIP, t("d_gpa_skip_norule"));
-  const [threshold, matched] = te_resolveGpa(gpaRule, profile.college, profile.major);
+  const [threshold, matchedRaw] = te_resolveGpa(gpaRule, profile.college, profile.major);
+  const matched = te_humanMatched(matchedRaw);
   if (threshold === null)
     return te_makeCheck("gpa", L, TE_SKIP, t("d_gpa_skip_nothreshold"));
   const gpa = profile.gpa;
@@ -368,7 +386,7 @@ function te_checkEligibility(school, profile) {
 
   const unknownSkipped = te_collectUnknowns(requirements);
   if (unknownSkipped.length) {
-    const shown = unknownSkipped.slice(0, 5).join(", ");
+    const shown = unknownSkipped.slice(0, 5).map(te_humanUnknown).join(", ");
     risks.push(t("r_unknowns", {
       n: unknownSkipped.length, list: shown,
       more: unknownSkipped.length > 5 ? t("r_unknowns_more") : "",
@@ -388,6 +406,7 @@ function te_checkEligibility(school, profile) {
     uc_application: requirements.uc_application_window || requirements.uc_application_deadline || null,
     tau_deadline: requirements.tau_deadline ?? null,
     admission_cycle: rule.admission_cycle ?? null,
+    academic_year: rule.academic_year ?? null,
     source: rule.source ?? null,
     verified_date: rule.verified_date ?? null,
   };

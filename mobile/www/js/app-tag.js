@@ -15,8 +15,10 @@ function tag_init() {
   sel.innerHTML = te_listSchools()
     .map(sid => `<option value="${sid}">${escapeHtml(tag_schoolName(sid))}</option>`)
     .join("");
+  let had = false;
   try {
     const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+    had = Object.keys(saved).length > 0;
     for (const [k, v] of Object.entries(saved)) {
       const el = document.getElementById(k);
       if (!el) continue;
@@ -24,8 +26,57 @@ function tag_init() {
       else el.value = v;
     }
   } catch (e) { /* 忽略 */ }
+  /* 首次打开（本机没存过表单）：预填示例数据，表单上方有示例提示条，可一键清空 */
+  if (!had) tag_fillExample();
   applyI18n();
   tag_placeholder();
+}
+
+/* 示例数据：与提示条文案一致（UC Irvine / Psychology / GPA 3.6） */
+function tag_fillExample() {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  set("school", "uc-irvine");
+  set("gpa", "3.6");
+  set("units", "45");
+  set("major", "Psychology");
+  set("english", "2");
+  set("math", "1");
+  set("spring", "12");
+  const prep = document.getElementById("prep");
+  if (prep) prep.checked = true;
+  const ba = document.getElementById("bachelor");
+  if (ba) ba.checked = false;
+}
+
+/* 清空：恢复空白表单，并清掉本机保存的表单与结果占位 */
+function tag_clearForm() {
+  for (const id of ["gpa", "units", "major", "english", "math", "spring"]) {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  }
+  const sel = document.getElementById("school");
+  if (sel) sel.selectedIndex = 0;
+  for (const id of ["prep", "bachelor"]) {
+    const el = document.getElementById(id);
+    if (el) el.checked = false;
+  }
+  try { localStorage.removeItem(LS_KEY); } catch (e) { /* 忽略 */ }
+  lastTagResult = null;
+  tag_placeholder();
+}
+
+/* 收尾：把本次判定结果存到本机（沿用站内 localStorage 模式，只存本设备） */
+function tag_saveResult(btn) {
+  if (!lastTagResult) return;
+  try {
+    localStorage.setItem("transferos_tag_result", JSON.stringify({
+      ts: Date.now(),
+      school: lastTagResult.school,
+      score: lastTagResult.score,
+      eligible: lastTagResult.eligible,
+    }));
+  } catch (e) { /* 忽略 */ }
+  if (btn) { btn.disabled = true; btn.textContent = t("fin_saved"); }
 }
 
 function tag_placeholder() {
@@ -126,8 +177,14 @@ function tag_render(r) {
   const risks = (r.risks || []).map(x => `<div class="risk">⚠️ ${escapeHtml(x)}</div>`).join("");
   const info = r.info || {};
   const srcLine = info.source
-    ? t("src_line", { source: `<a href="${escapeHtml(info.source)}" target="_blank" rel="noopener">${escapeHtml(info.source)}</a>`, date: escapeHtml(info.verified_date || "") })
+    ? t("tag_src_line", { source: `<a href="${escapeHtml(info.source)}" target="_blank" rel="noopener">${escapeHtml(info.source)}</a>`, date: escapeHtml(info.verified_date || "") })
     : "";
+  /* UC 申请日期在数据里常只写 "November 30"，按学年补上年份（如 2026-27 学年 → 2026 年） */
+  let ucApp = info.uc_application || "—";
+  if (info.uc_application && !/\d{4}/.test(info.uc_application) && info.academic_year) {
+    const y = String(info.academic_year).match(/\d{4}/);
+    if (y) ucApp = info.uc_application + ", " + y[0];
+  }
 
   box.innerHTML = `
     <div class="card">
@@ -140,13 +197,14 @@ function tag_render(r) {
         </div>
       </div>
       <div class="verdict-note">${escapeHtml(t("score_note"))}</div>
+      <div class="hint" style="margin-top:6px">${escapeHtml(t("result_based_on"))}</div>
     </div>
     <div class="card"><h3>${escapeHtml(t("sec_checks"))}</h3>${checks}</div>
     ${risks ? `<div class="card"><h3>${escapeHtml(t("sec_risks"))}</h3>${risks}</div>` : ""}
     <div class="card">
       <h3>${escapeHtml(t("sec_keydates"))}</h3>
       <div class="hint">${escapeHtml(t("kd_tagwindow"))}${escapeHtml(info.tag_window || "—")}</div>
-      <div class="hint">${escapeHtml(t("kd_ucapp"))}${escapeHtml(info.uc_application || "—")}</div>
+      <div class="hint">${escapeHtml(t("kd_ucapp"))}${escapeHtml(ucApp)}</div>
       ${info.tau_deadline ? `<div class="hint">${escapeHtml(t("kd_tau"))}${escapeHtml(info.tau_deadline)}</div>` : ""}
       <div class="meta">${srcLine}<br>${escapeHtml(r._disclaimer || "")}</div>
     </div>
@@ -154,7 +212,14 @@ function tag_render(r) {
       <div><div class="next-title">${escapeHtml(t("next_title"))} · ${escapeHtml(t("next_cmp"))}</div>
       <div class="next-tip">${escapeHtml(t("next_cmp_tip"))}</div></div>
       <div class="next-arrow">→</div>
-    </a>`;
+    </a>
+    <div class="card">
+      <div class="btn-row">
+        <button type="button" class="btn ghost" onclick="tag_saveResult(this)">${escapeHtml(t("fin_save_btn"))}</button>
+        <a class="btn" style="text-align:center;text-decoration:none" href="https://zhuanuc.com" target="_blank" rel="noopener">${escapeHtml(t("fin_home"))}</a>
+      </div>
+      <div class="hint" style="margin-top:8px">${escapeHtml(t("fin_note"))}</div>
+    </div>`;
   box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 

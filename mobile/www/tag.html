@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Transfer OS · TAG 检查</title>
-<link rel="stylesheet" href="css/app.css?v=26">
+<link rel="stylesheet" href="css/app.css?v=27">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7c3aed">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -27,6 +27,10 @@
 
 <div class="page">
   <div class="card">
+    <div style="background:#f4f2ff;border:1px solid #ddd6fe;border-radius:10px;padding:8px 10px;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start">
+      <span class="hint" style="flex:1" data-i18n="tag_example_hint"></span>
+      <button type="button" class="linkbtn" style="flex:none" onclick="tag_clearForm()" data-i18n="btn_clear_form"></button>
+    </div>
     <label class="f" for="school" data-i18n="f_school"></label>
     <select id="school"></select>
 
@@ -67,6 +71,7 @@
   <div id="result"></div>
 
   <div class="disclaimer" data-i18n="disclaimer_tag"></div>
+  <div class="hint" style="text-align:center;margin-top:8px"><a href="https://admission.universityofcalifornia.edu/admission-requirements/transfer-requirements/transfer-admission-guarantee-tag.html" target="_blank" rel="noopener" data-i18n="tag_official_link"></a></div>
 </div>
 
 <nav class="tabbar">
@@ -77,9 +82,9 @@
 </nav>
 
 <script src="js/tag-data.js?v=27"></script>
-<script src="js/i18n.js?v=26"></script>
-<script src="js/tag-engine.js?v=26"></script>
-<script src="js/app-tag.js?v=26"></script>
+<script src="js/i18n.js?v=27"></script>
+<script src="js/tag-engine.js?v=27"></script>
+<script src="js/app-tag.js?v=27"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {

@@ -472,13 +472,25 @@ function cmp_badge(s) {
   return `<span class="st ${s}">${cmp_escape(m[s] || s)}</span>`;
 }
 
+/* GPA 显示：最多两位小数、至少一位（4 → "4.0"，3.9 → "3.9"，3.94 → "3.94"） */
+function cmp_fmtGpa(v) {
+  if (v === null || v === undefined || !isFinite(Number(v))) return "?";
+  let s = (Math.round(Number(v) * 100) / 100).toFixed(2);
+  if (s.endsWith("0")) s = s.slice(0, -1);
+  if (s.endsWith(".")) s += "0";
+  return s;
+}
+
 function cmp_admitBadge(d, tt) {
   if (!/ucla/i.test(tt.target_name || "")) return "";
   if (typeof admit_findUcla !== "function") return "";
   const m = admit_findUcla(d.major_query || tt.major_label || "");
   if (!m) return "";
   const rate = (m.r === null || m.r === undefined) ? "?" : Math.round(m.r * 100) + "%";
-  const gpa = (m.g1 !== null && m.g2 !== null) ? `${m.g1}–${m.g2}` : "?";
+  /* 源数据里部分专业 25th 与 75th 本就相等（如 CS 均为 4.0）：显示单值，不造假区间 */
+  const gpa = (m.g1 !== null && m.g1 !== undefined && m.g2 !== null && m.g2 !== undefined)
+    ? (Number(m.g1) === Number(m.g2) ? cmp_fmtGpa(m.g1) : `${cmp_fmtGpa(m.g1)}–${cmp_fmtGpa(m.g2)}`)
+    : "?";
   const imp = m.imp
     ? `<div class="risk">⚠️ ${cmp_escape(t("admit_impacted"))}</div>
        <div class="hint">💡 ${cmp_escape(t("admit_tip"))}</div>` : "";
@@ -646,8 +658,8 @@ function cmp_chanceUcla(m, gpa) {
   let s = m.r >= 0.35 ? 3 : m.r >= 0.15 ? 2 : 1;
   const factors = [t("ch_f_rate", { r: Math.round(m.r * 100) })];
   if (gpa != null && m.g1 != null && m.g2 != null) {
-    if (gpa >= m.g2) { s += 1; factors.push(t("ch_f_gpa_high", { g: m.g2 })); }
-    else if (gpa < m.g1) { s -= 1; factors.push(t("ch_f_gpa_low", { g: m.g1 })); }
+    if (gpa >= m.g2) { s += 1; factors.push(t("ch_f_gpa_high", { g: cmp_fmtGpa(m.g2) })); }
+    else if (gpa < m.g1) { s -= 1; factors.push(t("ch_f_gpa_low", { g: cmp_fmtGpa(m.g1) })); }
     else factors.push(t("ch_f_gpa_mid"));
   }
   if (m.imp) {
@@ -715,7 +727,8 @@ function cmp_tagStrip(majorQuery, gpa) {
       + `<div class="hint">TAG GPA ${cmp_escape(gpaTxt)}${note ? " · " + cmp_escape(note) : ""}</div></div>`;
   }).join("");
   return `<div class="section-title">${cmp_escape(t("tag_strip_title"))}</div>`
-    + `<div class="hint">${cmp_escape(t("tag_strip_tip"))}</div>` + rows;
+    + `<div class="hint">${cmp_escape(t("tag_strip_tip"))}</div>` + rows
+    + `<div class="hint" style="margin-top:6px"><a href="https://admission.universityofcalifornia.edu/admission-requirements/transfer-requirements/transfer-admission-guarantee-tag.html" target="_blank" rel="noopener">${cmp_escape(t("tag_official_link"))}</a></div>`;
 }
 
 function cmp_chanceCard(d, chanceArr, gpa) {
@@ -937,7 +950,24 @@ function cmp_goldenPath(d) {
       + `<div class="hint">${covList}</div></div>`;
   }).join("");
   return `<div class="card"><div class="section-title">🏆 ${cmp_escape(t("gp_title"))}</div>`
-    + `<div class="hint" style="margin-bottom:8px">${cmp_escape(t("gp_hint"))}</div>${rows}</div>`;
+    + `<div class="hint" style="margin-bottom:8px">${cmp_escape(t("gp_hint"))}</div>`
+    + `<div class="hint" style="margin-bottom:8px">${cmp_escape(t("gp_legend"))}</div>${rows}</div>`;
+}
+
+/* 收尾：把本次对比结果摘要存到本机（与“我的规划”的表单保存互补，只存本设备） */
+function cmp_saveResult(btn) {
+  if (!lastCmpResult) return;
+  try {
+    localStorage.setItem("transferos_cmp_result", JSON.stringify({
+      ts: Date.now(),
+      cc_name: lastCmpResult.cc_name || "",
+      major_query: lastCmpResult.major_query || "",
+      targets: (lastCmpResult.targets || []).map(tt => ({
+        name: tt.target_name, status: tt.status, coverage_pct: tt.coverage_pct,
+      })),
+    }));
+  } catch (e) { /* 忽略 */ }
+  if (btn) { btn.disabled = true; btn.textContent = t("fin_saved"); }
 }
 
 function cmp_render(d) {
@@ -953,7 +983,8 @@ function cmp_render(d) {
       html += `<div class="card noagree">
         <div class="illus sm">${illus("search")}</div>
         <div><div class="cov-head"><h3 style="margin:0">${cmp_escape(tt.target_name)}</h3>${cmp_badge("no_agreement")}</div>
-        <div class="hint">${cmp_escape(tt.note || "")}</div></div>
+        <div class="hint">${cmp_escape(tt.note || "")}</div>
+        <div class="hint" style="margin-top:6px"><a href="https://assist.org" target="_blank" rel="noopener">${cmp_escape(t("assist_link"))}</a></div></div>
       </div>`;
       continue;
     }
@@ -1012,6 +1043,13 @@ function cmp_render(d) {
       + `<div><div class="next-title">${cmp_escape(t("next_title"))} · ${cmp_escape(t("next_val"))}</div>`
       + `<div class="next-tip">${cmp_escape(t("next_val_tip"))}</div></div>`
       + `<div class="next-arrow">→</div></a>`;
+    html += `<div class="card">
+      <div class="btn-row">
+        <button type="button" class="btn ghost" onclick="cmp_saveResult(this)">${cmp_escape(t("fin_save_btn"))}</button>
+        <a class="btn" style="text-align:center;text-decoration:none" href="https://zhuanuc.com" target="_blank" rel="noopener">${cmp_escape(t("fin_home"))}</a>
+      </div>
+      <div class="hint" style="margin-top:8px">${cmp_escape(t("fin_note"))}</div>
+    </div>`;
   }
   box.innerHTML = html || (`<div class="empty-card"><div class="illus">${illus("search")}</div>`
     + `<div class="empty-title">${cmp_escape(t("empty_title"))}</div>`
