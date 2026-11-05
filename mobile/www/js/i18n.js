@@ -1074,3 +1074,13 @@ function initLang() {
     document.documentElement.lang = HTML_LANG[l] || "zh-CN";
   }
 }
+
+/* Preserve an arriving ?ref= value for later attribution. Only allow-listed values are stored; absent or unlisted values leave any existing value unchanged. */
+(function () {
+  try {
+    var ref = new URLSearchParams(window.location.search).get("ref");
+    if (["reddit", "transfer-center", "seo"].indexOf(ref) !== -1) {
+      localStorage.setItem("transferos_ref", ref);
+    }
+  } catch (e) {}
+})();
