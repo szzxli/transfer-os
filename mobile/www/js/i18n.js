@@ -1081,5 +1081,5 @@ function initLang() {
     var ref = new URLSearchParams(window.location.search).get("ref");
     if (["reddit", "transfer-center", "seo"].indexOf(ref) !== -1) {
       
-  } catch (e) {}
+    }  } catch (e) {}
 })();
