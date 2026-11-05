@@ -1074,3 +1074,12 @@ function initLang() {
     document.documentElement.lang = HTML_LANG[l] || "zh-CN";
   }
 }
+
+/* Read an arriving ?ref= value from the URL only; it is never stored. */
+(function () {
+  try {
+    var ref = new URLSearchParams(window.location.search).get("ref");
+    if (["reddit", "transfer-center", "seo"].indexOf(ref) !== -1) {
+      
+    }  } catch (e) {}
+})();
