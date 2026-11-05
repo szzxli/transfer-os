@@ -1075,7 +1075,7 @@ function initLang() {
   }
 }
 
-/* Preserve an arriving ?ref= value for later attribution. Only allow-listed values are stored; absent or unlisted values leave any existing value unchanged. */
+/* Read an arriving ?ref= value from the URL only; it is never stored. */
 (function () {
   try {
     var ref = new URLSearchParams(window.location.search).get("ref");
