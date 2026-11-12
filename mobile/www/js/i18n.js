@@ -11,6 +11,7 @@ zh: {
 /* ---------- 通用 ---------- */
 app_tag_sub: "加州大学转学保证计划 · 规则引擎判定，仅供参考",
 app_cmp_sub: "同一批课，在不同 UC 认可程度一目了然 · ASSIST 公开协议数据",
+title_compare: "Transfer OS · 课程对比",
 nav_tag: "TAG 检查", nav_compare: "课程对比",
 nav_home: "首页",
 app_home_sub: "加州社区大学转 UC 工具箱",
@@ -343,6 +344,7 @@ en: {
 /* ---------- 通用 ---------- */
 app_tag_sub: "UC Transfer Admission Guarantee · rule-engine based, for reference only",
 app_cmp_sub: "See how the same courses count at different UCs · public ASSIST data",
+title_compare: "Transfer OS · Course Comparison",
 nav_tag: "TAG Check", nav_compare: "Compare",
 nav_home: "Home",
 app_home_sub: "CCC-to-UC transfer toolkit",
@@ -675,6 +677,7 @@ es: {
 /* ---------- 通用 ---------- */
 app_tag_sub: "Garantía de admisión por transferencia de UC · evaluado por motor de reglas, solo de referencia",
 app_cmp_sub: "Ve cómo cuentan los mismos cursos en distintas UC · datos públicos de ASSIST",
+title_compare: "Transfer OS · Comparación de cursos",
 nav_tag: "Verificar TAG", nav_compare: "Comparar",
 nav_home: "Inicio",
 app_home_sub: "Kit de transferencia CCC → UC",
