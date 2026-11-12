@@ -100,6 +100,8 @@ function cp_loadReports() {
       target_title: m.tt,
       status: m.st,
       section: m.sec,
+      /* 学期规划用：CC 课程学分（articulated 行必有，为数字字符串）。 */
+      cc_units: m.cu || "",
     })),
   }));
 }

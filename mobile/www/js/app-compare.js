@@ -657,8 +657,9 @@ function cmp_actionPlan(d) {
   const body = (rows || wasteHtml)
     ? (wasteHtml + (rows || `<div class="hint">${cmp_escape(t("plan_empty"))}</div>`) + excl)
     : `<div class="hint">✅ ${cmp_escape(t("plan_empty"))}</div>${excl}`;
+  const planBtn = '<div class="btn-row" style="margin-top:12px"><a class="btn" style="text-align:center;text-decoration:none" href="semester.html">' + cmp_escape(t('btn_plan_semester')) + ' \u2192</a></div>';
   return `<div class="card"><div class="section-title">${cmp_escape(t("plan_title"))}</div>`
-    + `<div class="hint">${cmp_escape(t("plan_tip"))}</div>${body}</div>`;
+    + `<div class="hint">${cmp_escape(t("plan_tip"))}</div>${body}${planBtn}</div>`;
 }
 
 function cmp_gpa() {
