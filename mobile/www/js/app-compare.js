@@ -581,12 +581,11 @@ function cmp_verdict(d, chanceArr, gpa) {
         ? t("verdict_course_1", { code: need[0].code })
         : t("verdict_course", { code: need[0].code, n: need[0].targets.length }))
     : t("verdict_course_done");
-    /* 有目标无协议时，“已覆盖全部要求”只针对有协议的目标，必须注明未纳入的那个 */
-    const noAgreeV = (d.targets || []).filter(tt => tt.status === "no_agreement");
-    const exclNote = noAgreeV.length
-      ? t("verdict_excl", { names: noAgreeV.map(x => x.target_name).join(t("verdict_list_sep")) })
-          : "";
-
+  /* 有目标无协议时，"已覆盖全部要求"只针对有协议的目标，必须注明未纳入的那个 */
+  const noAgreeV = (d.targets || []).filter(tt => tt.status === "no_agreement");
+  const exclNote = noAgreeV.length
+    ? t("verdict_excl", { names: noAgreeV.map(x => x.target_name).join(t("verdict_list_sep")) })
+    : "";
   const tagN = cmp_tagOkCount(gpa, d.major_query);
   const safetyPart = tagN ? t("verdict_safety", { n: tagN }) : "";
 
@@ -626,17 +625,17 @@ function cmp_verdict(d, chanceArr, gpa) {
  * 按"一课多用"（能补上几个目标）排序——这就是工具的核心答案：
  * 选课（先修什么）、差异性（这门课哪个目标要、哪个不要）、少修白课。 */
 function cmp_actionPlan(d) {
-    /* 诚实空态：一个有协议的目标都没有时，绝不能显示“已覆盖全部要求”——
-       * 那时根本没比对任何要求。 */
-    const noAgree = (d.targets || []).filter(tt => tt.status === "no_agreement");
-    const hasOk = (d.targets || []).some(tt => tt.status !== "no_agreement");
-    if (!hasOk) {
-          return `<div class="card"><div class="section-title">🎯 ${cmp_escape(t("plan_title"))}</div>`
-            + `<div class="hint">${cmp_escape(t("plan_no_data"))}</div></div>`;
-    }
-    const excl = noAgree.length
-      ? `<div class="hint">${cmp_escape(t("plan_excl", { names: noAgree.map(x => x.target_name).join(t("verdict_list_sep")) }))}</div>`
-          : "";
+  /* 诚实空态：一个有协议的目标都没有时，绝不能显示"已覆盖全部要求"——
+   * 那时根本没比对任何要求。 */
+  const noAgree = (d.targets || []).filter(tt => tt.status === "no_agreement");
+  const hasOk = (d.targets || []).some(tt => tt.status !== "no_agreement");
+  if (!hasOk) {
+    return `<div class="card"><div class="section-title">🎯 ${cmp_escape(t("plan_title"))}</div>`
+      + `<div class="hint">${cmp_escape(t("plan_no_data"))}</div></div>`;
+  }
+  const excl = noAgree.length
+    ? `<div class="hint">${cmp_escape(t("plan_excl", { names: noAgree.map(x => x.target_name).join(t("verdict_list_sep")) }))}</div>`
+    : "";
   const rows = cmp_needList(d)
     .map(e => `<div class="req"><span class="code">${cmp_escape(e.code)}</span>`
       + `<div class="hint">→ ${cmp_escape(e.targets.join("、"))} · ${cmp_escape(t("plan_need_n", { n: e.targets.length }))}</div></div>`)
