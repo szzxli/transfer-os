@@ -425,6 +425,8 @@ function sem_addBack(code) {
   sem_flash(sem_t("cap_msg"));
 }
 function sem_rebuild() {
+  var nEl = document.getElementById("semN");
+  if (nEl) S.nSem = Math.max(1, Math.min(8, parseInt(nEl.value, 10) || 4));
   S.order = sem_pickOrder(S.reqs, new Set(S.result.student_courses), S.units);
   var p = sem_pack(S.order, S.units, S.nSem, SEM_CAP);
   S.sems = p.sems; S.unplaced = p.unplaced;
@@ -449,7 +451,7 @@ function sem_courseRow(code, semIdx) {
   var h = '<div class="req"><span class="code">' + sem_esc(code) + '</span>'
     + ' <span class="ttl">' + sem_esc(S.titles[code] || "") + '</span>'
     + ' <span class="tag">' + sem_esc(unitLabel) + '</span>'
-    + '<div class="hint">' + sem_esc(sem_t("covers")) + '：' + sem_esc(sem_coversText(code)) + '</div>'
+    + '<div class="hint">' + sem_esc(sem_t("covers")) + (/^zh|^ja/.test(SEM_LANG || "") ? '：' : ': ') + sem_esc(sem_coversText(code)) + '</div>'
     + '<div class="btn-row" style="margin-top:6px">';
   if (semIdx === -1) {
     h += '<button class="btn ghost sm" data-act="add" data-code="' + sem_esc(code) + '">' + sem_esc(sem_t("add_back")) + '</button>';
@@ -479,7 +481,7 @@ function sem_render() {
     var totalUnits = 0;
     S.order.forEach(function (c) { totalUnits += S.units[c] || 0; });
     h += '<div class="hint" style="margin-top:6px">' + sem_esc(sem_t("summary", { n: S.order.length, u: sem_fmtUnits(totalUnits), s: S.nSem })) + '</div>';
-    if (S.flash) h += '<div class="hint" style="margin-top:6px">✓ ' + sem_esc(S.flash) + '</div>';
+    if (S.flash) h += '<div class="hint" style="margin-top:6px">' + sem_esc(S.flash) + '</div>';
     h += '<div class="f"><label for="semN">' + sem_esc(sem_t("sems_label")) + '</label>'
       + '<input type="number" id="semN" min="1" max="8" value="' + S.nSem + '"></div>'
       + '<div class="btn-row"><button class="btn" id="rebuildBtn">' + sem_esc(sem_t("btn_rebuild")) + '</button></div>';
@@ -544,14 +546,8 @@ document.addEventListener("DOMContentLoaded", function () {
     else if (act === "rm") sem_remove(code, from);
     else if (act === "add") sem_addBack(code);
   });
-  if (window.ARTIC_READY) sem_build();
-  else {
-    var tries = 0;
-    var timer = setInterval(function () {
-      tries++;
-      if (window.ARTIC_READY || tries > 100) { clearInterval(timer); sem_build(); }
-    }, 100);
-  }
+  /* ARTIC_READY 是 artic-boot 的解压 Promise：必须等它完成再算，否则 ARTIC_DATA 还是空数组。 */
+  Promise.resolve(window.ARTIC_READY).then(sem_build, sem_build);
 });
 /* 共享语言切换器（zh/en/es）会调它：只重刷本页字典与渲染，规划语言选择不变。 */
 window.__reRender = function () { sem_applyDict(); sem_render(); };
