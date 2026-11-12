@@ -153,8 +153,8 @@ plan_title: "🎯 待修清单",
 plan_tip: "按一课多用排序：排前面的课能同时补上更多目标。/ 任选其一，+ 需同组修完，详见下方各卡片。",
 plan_need_n: p => `${p.n} 所目标需要`,
 plan_empty: "已修课已覆盖全部目标要求",
-    plan_no_data: "所选目标暂无协议数据，本次未做要求比对。",
-    plan_excl: p => `未纳入比对：${p.names}（无协议）`,
+plan_no_data: "所选目标暂无协议数据，本次未做要求比对。",
+plan_excl: p => `未纳入比对：${p.names}（无协议）`,
 waste_at: p => `在 ${p.t} 白修`,
 f_gpa: "GPA", f_gpa_opt: "(选填，用于录取概率评估)", ph_gpa: "如 3.65",
 sum_chance: "录取概率",
@@ -183,7 +183,7 @@ tag_check_excl: "排除名单请人工核对",
 verdict_course: p => `先补 ${p.code}（一课顶 ${p.n} 校）`,
 verdict_course_1: p => `先补 ${p.code}（一课顶 1 校）`,
 verdict_course_done: "已修课已覆盖全部目标要求",
-    verdict_excl: p => `（${p.names}无协议，未纳入）`,
+verdict_excl: p => `（${p.names}无协议，未纳入）`,
 verdict_reach: p => `冲刺：${p.list}`,
 verdict_target: p => `主攻：${p.list}`,
 verdict_safety: p => `保底：TAG — ${p.n} 所 GPA 达标`,
@@ -484,8 +484,8 @@ plan_title: "🎯 Courses to take",
 plan_tip: "Sorted by multi-target value: top courses cover more campuses. / means either; + means take the whole group — see detail cards.",
 plan_need_n: p => `needed by ${p.n} target${p.n > 1 ? "s" : ""}`,
 plan_empty: "Your courses already cover all target requirements",
-    plan_no_data: "No agreement data for the selected targets — nothing was compared.",
-    plan_excl: p => `Not compared: ${p.names} (no agreement)`,
+plan_no_data: "No agreement data for the selected targets — nothing was compared.",
+plan_excl: p => `Not compared: ${p.names} (no agreement)`,
 waste_at: p => ` wasted at ${p.t}`,
 f_gpa: "GPA", f_gpa_opt: "(optional, for chance estimate)", ph_gpa: "e.g. 3.65",
 sum_chance: "Chance",
@@ -514,7 +514,7 @@ tag_check_excl: "verify exclusion list manually",
 verdict_course: p => `take ${p.code} first (covers ${p.n} campuses)`,
 verdict_course_1: p => `take ${p.code} first (covers 1 campus)`,
 verdict_course_done: "Your courses cover all target requirements",
-    verdict_excl: p => ` (${p.names} have no agreement and were not included)`,
+verdict_excl: p => ` (${p.names} have no agreement and were not included)`,
 verdict_reach: p => `Reach: ${p.list}`,
 verdict_target: p => `Target: ${p.list}`,
 verdict_safety: p => `Safety: TAG — ${p.n} campuses meet your GPA`,
@@ -815,8 +815,8 @@ plan_title: "🎯 Cursos por tomar",
 plan_tip: "Ordenados por valor multi-destino: los primeros cubren más universidades. / es opcional; + requiere todo el grupo — ver tarjetas.",
 plan_need_n: p => `lo requieren ${p.n} destino${p.n > 1 ? "s" : ""}`,
 plan_empty: "Tus cursos ya cubren todos los requisitos",
-    plan_no_data: "No hay datos de convenio para los destinos seleccionados; no se comparó ningún requisito.",
-    plan_excl: p => `Sin comparar: ${p.names} (sin convenio)`,
+plan_no_data: "No hay datos de convenio para los destinos seleccionados; no se comparó ningún requisito.",
+plan_excl: p => `Sin comparar: ${p.names} (sin convenio)`,
 waste_at: p => ` desperdiciado en ${p.t}`,
 f_gpa: "GPA", f_gpa_opt: "(opcional, para estimar probabilidad)", ph_gpa: "ej. 3.65",
 sum_chance: "Probabilidad",
@@ -845,7 +845,7 @@ tag_check_excl: "verifica la lista de exclusión manualmente",
 verdict_course: p => `toma ${p.code} primero (cubre ${p.n} universidades)`,
 verdict_course_1: p => `toma ${p.code} primero (cubre 1 universidad)`,
 verdict_course_done: "Tus cursos cubren todos los requisitos",
-    verdict_excl: p => ` (${p.names} no tienen convenio y no se incluyeron)`,
+verdict_excl: p => ` (${p.names} no tienen convenio y no se incluyeron)`,
 verdict_reach: p => `Aspiración: ${p.list}`,
 verdict_target: p => `Objetivo: ${p.list}`,
 verdict_safety: p => `Respaldo: TAG — ${p.n} universidades cumplen tu GPA`,
@@ -1076,14 +1076,14 @@ function i18n_check(requiredKeys) {
 
 function initLang() {
   var l = "";
-    try { l = localStorage.getItem("transferos_lang") || ""; } catch (e) {}
-    if (!l) {
-          /* 首次访问：按浏览器语言默认。旧逻辑永远默认中文，英文用户首屏是中文、
-               * 必须手动点 EN 才切英文。存过的偏好优先，不覆盖。 */
-          var nav = "";
-          try { nav = (navigator.language || navigator.userLanguage || "").toLowerCase(); } catch (e) {}
-          l = nav.indexOf("es") === 0 ? "es" : nav.indexOf("en") === 0 ? "en" : "zh";
-    }
+  try { l = localStorage.getItem("transferos_lang") || ""; } catch (e) {}
+  if (!l) {
+    /* 首次访问：按浏览器语言默认。旧逻辑永远默认中文，英文用户首屏是中文、
+     * 必须手动点 EN 才切英文。存过的偏好优先，不覆盖。 */
+    var nav = "";
+    try { nav = (navigator.language || navigator.userLanguage || "").toLowerCase(); } catch (e) {}
+    l = nav.indexOf("es") === 0 ? "es" : nav.indexOf("en") === 0 ? "en" : "zh";
+  }
   if (!I18N[l]) l = "zh";
   APP_LANG = l;
   if (typeof document !== "undefined") {
