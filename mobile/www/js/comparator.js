@@ -32,6 +32,53 @@ function cp_normLabel(text) {
   return String(text).trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+/* 专业名归一化：消除各校 ASSIST 报告里同一专业的写法差异——学位后缀
+ * 分隔符（"Computer Science/B.S." vs "Computer Science, B.S." vs
+ * "Computer Science B.S."）、"&" vs "and"、"A.B." vs "B.A."；
+ * 只归一化格式，不改专业本身的词。 */
+function cp_normMajor(text) {
+  if (!text) return "";
+  let t = String(text).toLowerCase().replace(/&/g, " and ");
+  t = t.replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+  t = t.replace(/\ba b\b/g, "b a"); /* A.B.（伯克利写法）与 B.A. 同一学位 */
+  return t;
+}
+
+/* 归一化串里的学位：B.S. -> "bs"，B.A. -> "ba"，无学位 -> "" */
+function cp_majorDegree(normMajor) {
+  if (/(^|\s)b s(\s|$)/.test(normMajor)) return "bs";
+  if (/(^|\s)b a(\s|$)/.test(normMajor)) return "ba";
+  return "";
+}
+
+/* 查询词的归一化形态：原样 + 去掉开头的院系代号前缀
+ *（"CSE: Computer Science B.S." 与 "Computer Science B.S." 同一专业）。*/
+function cp_majorQueries(query) {
+  const q = cp_normMajor(query);
+  if (!q) return [];
+  const out = [q];
+  const stripped = q.replace(/^(cse|eecs|ece|cs|ce)\s+(?=\S)/, "");
+  if (stripped && stripped !== q) out.push(stripped);
+  return out;
+}
+
+/* 一条 label 是否命中查询词。
+ * prefixOnly=true：只认前缀命中（"computer science" -> "Computer Science/B.S."）；
+ * prefixOnly=false：再认子串兜底（"data science" -> "Statistics and Data Science/B.S."），
+ * 但子串兜底只对不带学位的查询开放——带学位的查询（如 "Computer Science, B.A."）
+ * 若允许子串，会误命中 "Linguistics and Computer Science/B.A." 这类不同专业。*/
+function cp_majorMatch(label, query, prefixOnly) {
+  const l = cp_normMajor(label);
+  if (!l) return false;
+  for (const q of cp_majorQueries(query)) {
+    if (!q) continue;
+    const at = l.indexOf(q);
+    if (at === 0) return true;
+    if (!prefixOnly && at !== -1 && !cp_majorDegree(q)) return true;
+  }
+  return false;
+}
+
 function cp_parseGroup(section) {
   const m = /group_(\d+)\((\w+)\)/.exec(section || "");
   if (m) return [parseInt(m[1], 10), m[2]];
@@ -68,15 +115,20 @@ function cp_listOptions() {
   return { ccs: Object.keys(byCc).sort(), by_cc: byCc };
 }
 
+/* 两遍找报告：第一遍前缀精确命中，第二遍子串兜底。
+ * 旧逻辑是裸子串（label.includes(query)），"Computer Science/B.S." 命中不了
+ * "Computer Science, B.S."——各校同一专业的写法差异（/ 与 , 与空格）导致查无协议。*/
 function cp_findReport(reports, ccName, targetName, majorQuery) {
-  const q = cp_normLabel(majorQuery);
   const ccN = cp_normLabel(ccName), tgtN = cp_normLabel(targetName);
+  const pool = [];
   for (const r of reports) {
-    if (cp_normLabel(r.cc_name) === ccN &&
-        cp_normLabel(r.target_name) === tgtN &&
-        cp_normLabel(r.major).includes(q)) {
-      return r;
-    }
+    if (cp_normLabel(r.cc_name) === ccN && cp_normLabel(r.target_name) === tgtN) pool.push(r);
+  }
+  for (const r of pool) {
+    if (cp_majorMatch(r.major, majorQuery, true)) return r;
+  }
+  for (const r of pool) {
+    if (cp_majorMatch(r.major, majorQuery, false)) return r;
   }
   return null;
 }

@@ -126,6 +126,53 @@ def write_artic_gz(out_dir: Path, artic: list, chunk_kb: int = 100) -> tuple:
     return names + ["artic-boot.js"], len(raw), len(b64)
 
 
+def rewrite_shard_refs(names: list[str]) -> dict:
+    """按实际生成的分片数重写 HTML/SW 的分片引用（防漏改）。
+
+    names 为 write_artic_gz 返回的文件名；只取 artic-gz-{1..N}.js。
+    compare.html / validate.html：重写连续的
+      <script src="js/artic-gz-N.js?v=V"></script> 行，保留原 ?v=；
+    sw.js：重写连续的 './js/artic-gz-N.js', 行。
+    重写后逐文件校验引用数 == 实际分片数；任一处不符就抛错，
+    绝不静默落盘半改的文件。返回 {相对路径: 行数}。
+    """
+    import re as _re
+
+    www = ROOT / "mobile" / "www"
+    gz = [n for n in names if n.startswith("artic-gz-")]
+    if not gz:
+        raise ValueError("write_artic_gz 未返回任何 artic-gz 分片")
+    report = {}
+    for rel in ("compare.html", "validate.html"):
+        p = www / rel
+        text = p.read_text(encoding="utf-8")
+        m = _re.search(r'<script src="js/artic-gz-1\.js\?v=([^"]*)"></script>', text)
+        if not m:
+            raise ValueError(f"{rel} 里找不到 artic-gz-1.js 的 script 引用")
+        v = m.group(1)
+        block = "".join(f'<script src="js/{n}?v={v}"></script>\n' for n in gz)
+        new, cnt = _re.subn(
+            r'(?:<script src="js/artic-gz-\d+\.js\?v=[^"]*"></script>\n)+',
+            block, text, count=1)
+        if not cnt:
+            raise ValueError(f"{rel} 里找不到连续的 artic-gz script 块")
+        if len(_re.findall(r"artic-gz-\d+\.js", new)) != len(gz):
+            raise ValueError(f"{rel} 重写后引用数 != 分片数 {len(gz)}")
+        p.write_text(new, encoding="utf-8")
+        report[rel] = len(gz)
+    p = www / "sw.js"
+    text = p.read_text(encoding="utf-8")
+    block = "".join(f"  './js/{n}',\n" for n in gz)
+    new, cnt = _re.subn(r"(?:  '\./js/artic-gz-\d+\.js',\n)+", block, text, count=1)
+    if not cnt:
+        raise ValueError("sw.js 里找不到连续的 artic-gz ASSETS 行")
+    if len(_re.findall(r"artic-gz-\d+\.js", new)) != len(gz):
+        raise ValueError(f"sw.js 重写后引用数 != 分片数 {len(gz)}")
+    p.write_text(new, encoding="utf-8")
+    report["sw.js"] = len(gz)
+    return report
+
+
 def build_ge_data() -> dict:
     """20 所 CC 的 Cal-GETC 课程清单：{cc: {course_code: [areas]}}。"""
     data = {}
@@ -238,6 +285,10 @@ def main():
     print(f"TAG 学校: {len(tag)} -> tag-data.js {n1/1024:.1f} KB")
     print(f"报告: {len(artic)} 份, mappings: {sum(len(r['mappings']) for r in artic)} "
           f"-> raw {raw_len/1048576:.2f} MB, gz+b64 {b64_len/1024:.1f} KB: {', '.join(names)}")
+    n_gz = len([n for n in names if n.startswith("artic-gz-")])
+    refs = rewrite_shard_refs(names)
+    print(f"分片引用已按 {n_gz} 块重写："
+          + "、".join(f"{k} {v} 行" for k, v in refs.items()))
     print("HTML 引用: " + "".join(f'\n<script src="js/{s}"></script>' for s in names))
     ge = build_ge_data()
     if ge:
