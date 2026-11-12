@@ -1,11 +1,12 @@
 /* Transfer OS service worker — offline-first cache for the static app shell */
-const CACHE = 'transfer-os-v37';
+const CACHE = 'transfer-os-v39';
 const ASSETS = [
   './',
   './index.html',
   './tag.html',
   './compare.html',
   './validate.html',
+  './semester.html',
   './manifest.json',
   './css/app.css',
   './js/i18n.js',
@@ -35,6 +36,7 @@ const ASSETS = [
   './js/validator.js',
   './js/app-tag.js',
   './js/app-compare.js',
+  './js/app-semester.js',
   './js/app-validate.js',
   './icons/icon-192.png',
   './icons/icon-512.png',

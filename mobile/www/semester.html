@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title data-pi18n="title">Transfer OS · 按学期排课</title>
+<link rel="stylesheet" href="css/app.css?v=30">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#132625">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Transfer OS">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-in">
+    <div>
+      <div class="brand">🔀 Transfer OS</div>
+      <div class="sub" data-pi18n="sub"></div>
+    </div>
+    <div class="langswitch">
+      <button data-lang="zh" onclick="setLang('zh')">中文</button><button data-lang="en" onclick="setLang('en')">EN</button><button data-lang="es" onclick="setLang('es')">ES</button>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="card">
+    <div class="section-title" data-pi18n="h1">按学期排课</div>
+    <label class="f" for="planLang" data-pi18n="plan_lang">规划语言</label>
+    <select id="planLang">
+      <option value="zh-CN">中文（简体）</option>
+      <option value="zh-TW">中文（繁體）</option>
+      <option value="en">English</option>
+      <option value="es">Español</option>
+      <option value="ko">한국어</option>
+      <option value="ja">日本語</option>
+    </select>
+    <div class="btn-row" style="margin-top:12px">
+      <a class="btn ghost" style="text-align:center;text-decoration:none" href="compare.html" data-pi18n="back">← 回对比页</a>
+    </div>
+  </div>
+
+  <div id="plan"></div>
+
+  <div class="disclaimer" data-pi18n="disclaimer">非官方，以 ASSIST 和 counselor 为准。</div>
+  <div class="hint" style="text-align:center;margin-top:8px"><a href="https://assist.org" target="_blank" rel="noopener" data-i18n="assist_link"></a></div>
+</div>
+
+<nav class="tabbar">
+  <a href="index.html"><span class="ico">🏠</span><span data-i18n="nav_home"></span></a>
+  <a href="tag.html"><span class="ico">🎓</span><span data-i18n="nav_tag"></span></a>
+  <a href="compare.html"><span class="ico">🔀</span><span data-i18n="nav_compare"></span></a>
+  <a href="validate.html"><span class="ico">📋</span><span data-i18n="nav_validate"></span></a>
+</nav>
+
+<script src="js/artic-gz-1.js?v=30"></script>
+<script src="js/artic-gz-2.js?v=30"></script>
+<script src="js/artic-gz-3.js?v=30"></script>
+<script src="js/artic-gz-4.js?v=30"></script>
+<script src="js/artic-gz-5.js?v=30"></script>
+<script src="js/artic-gz-6.js?v=30"></script>
+<script src="js/artic-gz-7.js?v=30"></script>
+<script src="js/artic-gz-8.js?v=30"></script>
+<script src="js/artic-gz-9.js?v=30"></script>
+<script src="js/artic-gz-10.js?v=30"></script>
+<script src="js/artic-gz-11.js?v=30"></script>
+<script src="js/artic-gz-12.js?v=30"></script>
+<script src="js/artic-gz-13.js?v=30"></script>
+<script src="js/artic-boot.js?v=30"></script>
+<script src="js/i18n.js?v=32"></script>
+<script src="js/comparator.js?v=31"></script>
+<script src="js/app-semester.js?v=32"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
