@@ -29,52 +29,52 @@ def _norm_label(text: str | None) -> str:
 
 
 def _norm_major(text: str | None) -> str:
-      """专业名归一化：消除各校 ASSIST 报告里同一专业的写法差异——学位后缀
-          分隔符（"Computer Science/B.S." vs "Computer Science, B.S." vs
-              "Computer Science B.S."）、"&" vs "and"、"A.B." vs "B.A."。只归一化格式。"""
-      if not text:
-                return ""
-            t = re.sub(r"[^a-z0-9]+", " ", text.lower().replace("&", " and "))
-    t = re.sub(r"\s+", " ", t.strip()
-                   return re.sub(r"\ba b\b", "b a", t)  # A.B.（伯克利写法）与 B.A. 同一学位
+    """专业名归一化：消除各校 ASSIST 报告里同一专业的写法差异——学位后缀
+    分隔符（"Computer Science/B.S." vs "Computer Science, B.S." vs
+    "Computer Science B.S."）、"&" vs "and"、"A.B." vs "B.A."。只归一化格式。"""
+    if not text:
+        return ""
+    t = re.sub(r"[^a-z0-9]+", " ", text.lower().replace("&", " and "))
+    t = re.sub(r"\s+", " ", t).strip()
+    return re.sub(r"\ba b\b", "b a", t)  # A.B.（伯克利写法）与 B.A. 同一学位
 
 
 def _major_degree(norm_major: str) -> str:
-      if re.search(r"(^|\s)b s(\s|$)", norm_major):
-                return "bs"
-            if re.search(r"(^|\s)b a(\s|$)", norm_major):
-                      return "ba"
-                  return ""
+    if re.search(r"(^|\s)b s(\s|$)", norm_major):
+        return "bs"
+    if re.search(r"(^|\s)b a(\s|$)", norm_major):
+        return "ba"
+    return ""
 
 
 def _major_queries(query: str) -> list[str]:
-      q = _norm_major(query)
+    q = _norm_major(query)
     if not q:
-              return []
-          out = [q]
+        return []
+    out = [q]
     stripped = re.sub(r"^(cse|eecs|ece|cs|ce)\s+(?=\S)", "", q)
     if stripped and stripped != q:
-              out.append(stripped)
-          return out
+        out.append(stripped)
+    return out
 
 
 def _major_match(label: str, query: str, prefix_only: bool) -> bool:
-      """一条 label 是否命中查询词。prefix_only=True 只认前缀命中；
-          否则再认子串兜底，但子串兜底只对不带学位的查询开放——带学位的查询
-              （如 "Computer Science, B.A."）若允许子串，会误命中
-                  "Linguistics and Computer Science/B.A." 这类不同专业。"""
+    """一条 label 是否命中查询词。prefix_only=True 只认前缀命中；
+    否则再认子串兜底，但子串兜底只对不带学位的查询开放——带学位的查询
+    （如 "Computer Science, B.A."）若允许子串，会误命中
+    "Linguistics and Computer Science/B.A." 这类不同专业。"""
     l = _norm_major(label)
     if not l:
-              return False
-          for q in _major_queries(query):
-                    if not q:
-                                  continue
-                              at = l.find(q)
+        return False
+    for q in _major_queries(query):
+        if not q:
+            continue
+        at = l.find(q)
         if at == 0:
-                      return True
-                  if not prefix_only and at != -1 and not _major_degree(q):
-                                return True
-                        return False
+            return True
+        if not prefix_only and at != -1 and not _major_degree(q):
+            return True
+    return False
 
 
 def _parse_group(section: str) -> tuple[int, str]:
@@ -119,22 +119,22 @@ def list_options() -> dict:
 
 
 def _find_report(reports: list[dict], cc_name: str,
-                                  target_name: str, major_query: str) -> dict | None:
-                                        """按 (CC， 目标校， 专业查询词) 找报告；专业用归一化两遍匹配
-                                            （第一遍前缀精确，第二遍子串兜底、学位冲突时不匹配）。
-                                                旧逻辑是裸子串，查不到 "Computer Science, B.S." 写法对应的
-                                                    "Computer Science/B.S." 报告。"""
-                                        cc_n, tgt_n = _norm_label(cc_name), _norm_label(target_name)
-                                        pool = [r for r in reports
-                                                            if _norm_label(r.get("cc_name")) == cc_n
-                                                            and _norm_label(r.get("target_name")) == tgt_n]
-                                        for r in pool:
-                                                  if _major_match(r.get("major"), major_query, True):
-                                                                return r
-                                                        for r in pool:
-                                                                  if _major_match(r.get("major"), major_query, False):
-                                                                                return r
-                                                                        return None
+                 target_name: str, major_query: str) -> dict | None:
+    """按 (CC, 目标校, 专业查询词) 找报告；专业用归一化两遍匹配
+    （第一遍前缀精确，第二遍子串兜底、学位冲突时不匹配）。
+    旧逻辑是裸子串，查不到 "Computer Science, B.S." 写法对应的
+    "Computer Science/B.S." 报告。"""
+    cc_n, tgt_n = _norm_label(cc_name), _norm_label(target_name)
+    pool = [r for r in reports
+            if _norm_label(r.get("cc_name")) == cc_n
+            and _norm_label(r.get("target_name")) == tgt_n]
+    for r in pool:
+        if _major_match(r.get("major"), major_query, True):
+            return r
+    for r in pool:
+        if _major_match(r.get("major"), major_query, False):
+            return r
+    return None
 
 
 # ---------------------------------------------------------------------------
