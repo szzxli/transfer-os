@@ -102,3 +102,55 @@ def test_compare_multi_target_matrix(monkeypatch):
     assert out["targets"][0]["covered"] == 1   # UCB 覆盖
     assert out["targets"][1]["covered"] == 0   # UCSD 缺失
     assert out["targets"][1]["missing"][0]["options"] == ["CS 31"]
+
+
+def test_find_report_major_separator_variants(monkeypatch):
+    """专业写法差异必须命中同一份报告（SMC -> UCLA CS 的线上故障：
+    数据 label 是 "Computer Science/B.S."，用户按 ASSIST 写法
+    "Computer Science, B.S." / "Computer Science B.S." 查必须命中）。"""
+    rep = _report([_mapping("CS 31", "COMPSCI 31")], major="Computer Science/B.S.")
+    rep["target_name"] = "UCLA"
+    monkeypatch.setattr(engine, "load_reports", lambda: [rep])
+    for q in ("computer science", "Computer Science, B.S.",
+              "Computer Science B.S.", "CSE: Computer Science B.S."):
+        out = compare("Test CC", q, ["UCLA"], ["CS 31"])
+        assert out["targets"][0]["status"] == "ok", q
+        assert out["targets"][0]["major_label"] == "Computer Science/B.S."
+
+
+def test_find_report_degree_mismatch_no_match(monkeypatch):
+    """学位冲突不匹配：B.A. 查询不应命中 B.S. 报告。"""
+    rep = _report([_mapping("CS 31", "COMPSCI 31")], major="Computer Science/B.S.")
+    rep["target_name"] = "UCLA"
+    monkeypatch.setattr(engine, "load_reports", lambda: [rep])
+    out = compare("Test CC", "Computer Science, B.A.", ["UCLA"], ["CS 31"])
+    assert out["targets"][0]["status"] == "no_agreement"
+
+
+def test_find_report_ab_ba_same_degree(monkeypatch):
+    """A.B.（伯克利写法）与 B.A. 是同一学位，必须互相命中。"""
+    rep = _report([_mapping("ECON 1", "ECON 1")], major="Economics A.B.")
+    rep["target_name"] = "UC Berkeley"
+    monkeypatch.setattr(engine, "load_reports", lambda: [rep])
+    out = compare("Test CC", "Economics, B.A.", ["UC Berkeley"], ["ECON 1"])
+    assert out["targets"][0]["status"] == "ok"
+
+
+def test_find_report_empty_query_no_match(monkeypatch):
+    """空查询词不命中任何报告（旧逻辑里 "".includes 恒真，会误命中首条）。"""
+    rep = _report([_mapping("CS 31", "COMPSCI 31")], major="Computer Science/B.S.")
+    rep["target_name"] = "UCLA"
+    monkeypatch.setattr(engine, "load_reports", lambda: [rep])
+    out = compare("Test CC", "", ["UCLA"], ["CS 31"])
+    assert out["targets"][0]["status"] == "no_agreement"
+
+
+def test_find_report_degree_query_no_substring_fallback(monkeypatch):
+    """带学位的查询不走子串兜底："Computer Science, B.A." 不应命中
+    "Linguistics and Computer Science/B.A."（不同专业，只因名字里含 CS）。"""
+    rep = _report([_mapping("LING 1", "LING 1")],
+                  major="Linguistics and Computer Science/B.A.")
+    rep["target_name"] = "UCLA"
+    monkeypatch.setattr(engine, "load_reports", lambda: [rep])
+    out = compare("Test CC", "Computer Science, B.A.", ["UCLA"], ["LING 1"])
+    assert out["targets"][0]["status"] == "no_agreement"
