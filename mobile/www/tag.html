@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Transfer OS · TAG 检查</title>
-<link rel="stylesheet" href="css/app.css?v=30">
+<link rel="stylesheet" href="css/app.css?v=31">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#132625">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -45,6 +45,26 @@
       </div>
     </div>
 
+    <div class="grid2">
+      <div>
+        <label class="f" for="whatif_units"><span data-i18n="f_whatif_units"></span> <span class="opt" data-i18n="f_whatif_units_opt"></span></label>
+        <input id="whatif_units" type="number" step="0.5" min="0" inputmode="decimal" data-i18n-ph="ph_whatif_units">
+      </div>
+      <div>
+        <label class="f" for="whatif_grade"><span data-i18n="f_whatif_grade"></span> <span class="opt" data-i18n="f_whatif_grade_opt"></span></label>
+        <div class="whatif-grade-row">
+          <select id="whatif_grade">
+            <option value="" data-i18n="whatif_grade_blank"></option>
+            <option value="4" data-i18n="whatif_grade_a"></option>
+            <option value="3" data-i18n="whatif_grade_b"></option>
+            <option value="2" data-i18n="whatif_grade_c"></option>
+          </select>
+          <input id="whatif_grade_num" type="number" step="0.01" min="0" max="4.5" inputmode="decimal" data-i18n-ph="ph_whatif_grade">
+        </div>
+      </div>
+    </div>
+    <div id="whatif_live" class="hint" aria-live="polite"></div>
+
     <label class="f" for="major"><span data-i18n="f_major"></span> <span class="opt" data-i18n="f_major_hint"></span></label>
     <input id="major" type="text" data-i18n-ph="ph_major" autocomplete="off">
 
@@ -81,10 +101,10 @@
   <a href="validate.html"><span class="ico">📋</span><span data-i18n="nav_validate"></span></a>
 </nav>
 
-<script src="js/tag-data.js?v=30"></script>
-<script src="js/i18n.js?v=30"></script>
-<script src="js/tag-engine.js?v=30"></script>
-<script src="js/app-tag.js?v=30"></script>
+<script src="js/tag-data.js?v=31"></script>
+<script src="js/i18n.js?v=31"></script>
+<script src="js/tag-engine.js?v=31"></script>
+<script src="js/app-tag.js?v=31"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {

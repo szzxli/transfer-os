@@ -30,6 +30,8 @@ function tag_init() {
   if (!had) tag_fillExample();
   applyI18n();
   tag_placeholder();
+  tag_bindWhatIf();
+  tag_updateWhatIfLive();
 }
 
 /* 示例数据：与提示条文案一致（UC Irvine / Psychology / GPA 3.6） */
@@ -50,7 +52,7 @@ function tag_fillExample() {
 
 /* 清空：恢复空白表单，并清掉本机保存的表单与结果占位 */
 function tag_clearForm() {
-  for (const id of ["gpa", "units", "major", "english", "math", "spring"]) {
+  for (const id of ["gpa", "units", "major", "english", "math", "spring", "whatif_units", "whatif_grade", "whatif_grade_num"]) {
     const el = document.getElementById(id);
     if (el) el.value = "";
   }
@@ -63,6 +65,7 @@ function tag_clearForm() {
   try { localStorage.removeItem(LS_KEY); } catch (e) { /* 忽略 */ }
   lastTagResult = null;
   tag_placeholder();
+  tag_updateWhatIfLive();
 }
 
 /* 收尾：把本次判定结果存到本机（沿用站内 localStorage 模式，只存本设备） */
@@ -92,6 +95,106 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;");
 }
 
+
+function tag_expectedGrade() {
+  const numEl = document.getElementById("whatif_grade_num");
+  const selEl = document.getElementById("whatif_grade");
+  if (numEl) {
+    const raw = numEl.value.trim();
+    if (raw !== "") {
+      const n = parseFloat(raw);
+      return isFinite(n) ? n : null;
+    }
+  }
+  if (!selEl) return null;
+  const v = selEl.value.trim();
+  if (v === "") return null;
+  const n = parseFloat(v);
+  return isFinite(n) ? n : null;
+}
+
+function tag_fmtGpa(x) {
+  return (Math.round(Number(x) * 100) / 100).toFixed(2);
+}
+
+/* 加权平均：预计 GPA = (当前 GPA × 已完成学分 + 预计成绩 × 下学期学分) / 总学分。
+ * 已完成学分沿用表单里的 #units，不另开一栏。 */
+function tag_projectGpa(f) {
+  if (!f) return null;
+  const gpa = f.gpa, units = f.units, planned = f.whatif_units, grade = f.whatif_grade;
+  if (gpa === null || units === null || planned === null || grade === null) return null;
+  if (!(gpa >= 0 && gpa <= 4.5)) return null;
+  if (!(units >= 0) || !(planned > 0) || !(grade >= 0 && grade <= 4.5)) return null;
+  return (gpa * units + grade * planned) / (units + planned);
+}
+
+function tag_gpaThreshold(school, major) {
+  if (!school || typeof te_loadRule !== "function" || typeof te_resolveGpa !== "function") {
+    return { threshold: null, matched: null };
+  }
+  try {
+    const rule = te_loadRule(school);
+    const req = (rule && rule.requirements) || {};
+    const gpaRule = req.min_gpa !== undefined ? req.min_gpa : req.min_gpa_by_major;
+    if (gpaRule === undefined || gpaRule === null || (typeof te_isUnknown === "function" && te_isUnknown(gpaRule))) {
+      return { threshold: null, matched: null };
+    }
+    const [threshold, matchedRaw] = te_resolveGpa(gpaRule, null, major || null);
+    const matched = typeof te_humanMatched === "function" ? te_humanMatched(matchedRaw) : matchedRaw;
+    return { threshold, matched };
+  } catch (e) {
+    return { threshold: null, matched: null };
+  }
+}
+
+function tag_whatifStarted(f) {
+  if (!f) return false;
+  return f.whatif_units !== null || f.whatif_grade !== null;
+}
+
+function tag_whatifText(f) {
+  if (!f || !tag_whatifStarted(f)) return "";
+  const proj = tag_projectGpa(f);
+  if (proj === null) return t("whatif_need_more");
+  let s = t("whatif_proj", { gpa: tag_fmtGpa(proj) });
+  const thr = tag_gpaThreshold(f.school, f.major);
+  if (thr.threshold !== null && isFinite(thr.threshold)) {
+    const diff = Math.round((proj - thr.threshold) * 100) / 100;
+    const args = { min: tag_fmtGpa(thr.threshold), diff: Math.abs(diff).toFixed(2) };
+    s += " — " + (diff >= 0 ? t("whatif_meets", args) : t("whatif_short", args));
+  } else {
+    s += " — " + t("whatif_no_min");
+  }
+  return s;
+}
+
+function tag_updateWhatIfLive() {
+  const box = document.getElementById("whatif_live");
+  if (!box) return;
+  const f = {
+    school: (document.getElementById("school") || {}).value || "",
+    major: ((document.getElementById("major") || {}).value || "").trim(),
+    gpa: (function () { const x = (document.getElementById("gpa") || {}).value; const n = parseFloat(x); return x && isFinite(n) ? n : null; })(),
+    units: (function () { const x = (document.getElementById("units") || {}).value; const n = parseFloat(x); return x && isFinite(n) ? n : null; })(),
+    whatif_units: (function () { const x = (document.getElementById("whatif_units") || {}).value; const n = parseFloat(x); return x && isFinite(n) ? n : null; })(),
+    whatif_grade: tag_expectedGrade(),
+  };
+  const text = tag_whatifText(f);
+  box.textContent = text;
+  box.style.display = text ? "" : "none";
+}
+
+function tag_bindWhatIf() {
+  const ids = ["gpa", "units", "major", "school", "whatif_units", "whatif_grade", "whatif_grade_num"];
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (!el || el.dataset.whatifBound) continue;
+    el.dataset.whatifBound = "1";
+    el.addEventListener("input", tag_updateWhatIfLive);
+    el.addEventListener("change", tag_updateWhatIfLive);
+  }
+}
+
 function tag_collect() {
   const v = id => document.getElementById(id).value.trim();
   const num = id => { const x = v(id); return x === "" ? null : parseFloat(x); };
@@ -103,6 +206,8 @@ function tag_collect() {
     english: v("english") === "" ? null : parseInt(v("english"), 10),
     math: v("math") === "" ? null : parseInt(v("math"), 10),
     spring: num("spring"),
+    whatif_units: num("whatif_units"),
+    whatif_grade: tag_expectedGrade(),
     prep: document.getElementById("prep").checked,
     bachelor: document.getElementById("bachelor").checked,
   };
@@ -162,6 +267,13 @@ function tag_scoreRing(score) {
   </div>`;
 }
 
+
+function tag_whatifResultLine() {
+  const text = tag_whatifText(tag_collect());
+  if (!text) return "";
+  return `<div id="whatif_result" class="hint" style="margin-top:8px">${escapeHtml(text)}</div>`;
+}
+
 function tag_render(r) {
   const box = document.getElementById("result");
   const verdictCls = r.eligible ? "ok" : "bad";
@@ -198,6 +310,7 @@ function tag_render(r) {
       </div>
       <div class="verdict-note">${escapeHtml(t("score_note"))}</div>
       <div class="hint" style="margin-top:6px">${escapeHtml(t("result_based_on"))}</div>
+      ${tag_whatifResultLine()}
     </div>
     <div class="card"><h3>${escapeHtml(t("sec_checks"))}</h3>${checks}</div>
     ${risks ? `<div class="card"><h3>${escapeHtml(t("sec_risks"))}</h3>${risks}</div>` : ""}
@@ -226,6 +339,7 @@ function tag_render(r) {
 window.__reRender = function () {
   if (lastTagResult) tag_render(lastTagResult);
   else tag_placeholder();
+  tag_updateWhatIfLive();
 };
 
 document.addEventListener("DOMContentLoaded", tag_init);
