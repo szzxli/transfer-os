@@ -508,3 +508,8 @@ details.more summary { font-size: 14px; color: var(--brand1); cursor: pointer; p
 /* 底部导航原生手感 */
 .tabbar a { -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent;
   touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+
+.whatif-grade-row { display: flex; gap: 8px; align-items: stretch; }
+.whatif-grade-row select { flex: 1 1 46%; min-width: 0; }
+.whatif-grade-row input { flex: 1 1 54%; min-width: 0; }
+#whatif_live { margin-top: 8px; min-height: 0; }
