@@ -716,8 +716,10 @@ function cmp_chanceCell(ch) {
   return cmp_bandChip(ch.band);
 }
 
-/* TAG 一致性：六校 TAG 的 GPA 门槛 vs 用户 GPA + 专业排除名单关键词核对 */
-function cmp_tagStrip(majorQuery, gpa) {
+/* TAG 一致性：六校 TAG 的 GPA 门槛 vs 用户 GPA + 专业排除名单关键词核对。
+ * showUci2028 为 true（对比目标含 UCI）时，另附 Fall 2028 未来提示：
+ * 只展示 TAG_CHANCE 里的 future_excluded_2028，不参与任何判定。 */
+function cmp_tagStrip(majorQuery, gpa, showUci2028) {
   const campuses = (typeof TAG_CHANCE !== "undefined" && TAG_CHANCE.campuses) || [];
   if (!campuses.length) return "";
   const q = String(majorQuery || "").toLowerCase().trim();
@@ -743,8 +745,18 @@ function cmp_tagStrip(majorQuery, gpa) {
     return `<div class="req"><span class="code">${cmp_escape(c.name)}</span> ${badge}`
       + `<div class="hint">TAG GPA ${cmp_escape(gpaTxt)}${note ? " · " + cmp_escape(note) : ""}</div></div>`;
   }).join("");
+  let futureNote = "";
+  if (showUci2028) {
+    const uci = campuses.find(c => c.id === "uc-irvine" || /irvine/i.test(c.name || ""));
+    const list = (uci && uci.future_excluded_2028) || [];
+    if (list.length) {
+      futureNote = `<div class="hint" style="margin-top:8px">⚠️ ${cmp_escape(t("tag_f2028_lead"))}<br>`
+        + list.map(e => `• ${cmp_escape(e)}`).join("<br>")
+        + `<br><a href="https://www.admissions.uci.edu/apply/transfer-students/guaranteed-admissions.php" target="_blank" rel="noopener">${cmp_escape(t("tag_f2028_src"))}</a></div>`;
+    }
+  }
   return `<div class="section-title">${cmp_escape(t("tag_strip_title"))}</div>`
-    + `<div class="hint">${cmp_escape(t("tag_strip_tip"))}</div>` + rows
+    + `<div class="hint">${cmp_escape(t("tag_strip_tip"))}</div>` + rows + futureNote
     + `<div class="hint" style="margin-top:6px"><a href="https://admission.universityofcalifornia.edu/admission-requirements/transfer-requirements/transfer-admission-guarantee-tag.html" target="_blank" rel="noopener">${cmp_escape(t("tag_official_link"))}</a></div>`;
 }
 
@@ -757,10 +769,11 @@ function cmp_chanceCard(d, chanceArr, gpa) {
       : `${cmp_bandChip(ch.band)}<div class="hint">${ch.factors.map(f => cmp_escape(f)).join(" · ")}</div>`;
     return `<div class="req"><span class="code">${cmp_escape(tt.target_name)}</span> ${inner}</div>`;
   }).join("");
+  const showUci2028 = d.targets.some(tt => /irvine/i.test(tt.target_name || ""));
   return `<div class="card"><div class="section-title">${cmp_escape(t("chance_title"))}</div>`
     + `<div class="hint">${cmp_escape(t("chance_tip"))}</div>`
     + (gpa != null ? "" : `<div class="hint">💡 ${cmp_escape(t("chance_need_gpa"))}</div>`)
-    + perTarget + cmp_tagStrip(d.major_query, gpa)
+    + perTarget + cmp_tagStrip(d.major_query, gpa, showUci2028)
     + `<div class="hint">${cmp_escape(t("chance_disc"))}</div></div>`;
 }
 

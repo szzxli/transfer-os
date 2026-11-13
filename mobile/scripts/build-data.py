@@ -196,6 +196,56 @@ def build_ge_data() -> dict:
     return data
 
 
+def build_tagchance_data(tag: dict) -> dict:
+    """TAG 一致性检查用精简数据：每校 {id, name, gpa:[min,max], excluded:[...]}。
+    gpa 为该校各学院/专业 TAG 最低 GPA 要求区间；excluded 为专业排除名单原文。
+    future_excluded_2028 为下一申请季（Fall 2028）新增排除名单原文，仅作未来提示
+    展示用，绝不参与判定逻辑（判定只读 excluded，即当前季 Fall 2027 名单）。
+    注：本函数在 2026-11-12 #100 分片重构中被误删（main 不再生成 tagchance-data.js），
+    2026-11-13 #108 恢复并扩展。"""
+    campuses = []
+    for cid, c in (tag or {}).items():
+        req = (c or {}).get("requirements", {}) or {}
+        nums = []
+
+        def walk(o):
+            if isinstance(o, dict):
+                for v in o.values():
+                    walk(v)
+            elif isinstance(o, list):
+                for v in o:
+                    walk(v)
+            elif isinstance(o, (int, float)) and not isinstance(o, bool):
+                if 1.0 <= o <= 4.5:
+                    nums.append(float(o))
+
+        for k in ("min_gpa", "min_gpa_by_major"):
+            if k in req:
+                walk(req[k])
+        excl = []
+        for k, v in req.items():
+            # 只取当前申请季（Fall 2027）的排除名单；fall_2028_additions 是下一季的，不混入
+            if k.startswith("excluded") and "2028" not in k and isinstance(v, list):
+                for e in v:
+                    if isinstance(e, str) and e.strip():
+                        excl.append(e.strip())
+        fut = []
+        v28 = req.get("excluded_majors_fall_2028_additions")
+        if isinstance(v28, list):
+            for e in v28:
+                if isinstance(e, str) and e.strip():
+                    fut.append(e.strip())
+        campuses.append({
+            "id": cid,
+            "name": (c or {}).get("school", cid),
+            "gpa": [min(nums), max(nums)] if nums else [0, 0],
+            "excluded": excl,
+            "future_excluded_2028": fut,
+        })
+    campuses.sort(key=lambda c: c["name"])
+    return {"campuses": campuses}
+
+
 def build_admit_data() -> dict:
     """UCLA Transfer Profile by Major（Fall 2025 + impacted 标记）。"""
     path = RAW_DIR / "ucla_admit_2025.json"
@@ -281,6 +331,9 @@ def main():
     tag = build_tag_data()
     artic = build_artic_data()
     n1 = write_js_module(OUT_JS / "tag-data.js", "TAG_DATA", tag)
+    tc = build_tagchance_data(tag)
+    ntc = write_js_module(OUT_JS / "tagchance-data.js", "TAG_CHANCE", tc)
+    print(f"TAG 一致性精简: {len(tc['campuses'])} 校 -> tagchance-data.js {ntc/1024:.1f} KB")
     names, raw_len, b64_len = write_artic_gz(OUT_JS, artic)
     print(f"TAG 学校: {len(tag)} -> tag-data.js {n1/1024:.1f} KB")
     print(f"报告: {len(artic)} 份, mappings: {sum(len(r['mappings']) for r in artic)} "
