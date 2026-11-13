@@ -1,9 +1,9 @@
 school: UC Irvine
 program: TAG
 academic_year: 2026-27
-admission_cycle: Fall 2026 criteria published; Fall 2027 major exclusions confirmed
-source: https://admissions.uci.edu/apply/transfer/guaranteed-admission.php
-verified_date: 2026-10-15
+admission_cycle: Fall 2026 criteria published; Fall 2027 major exclusions confirmed; Fall 2028 additions verified 2026-11-13 against UCI official Guaranteed Admissions page
+source: https://www.admissions.uci.edu/apply/transfer-students/guaranteed-admissions.php
+verified_date: 2026-11-13
 requirements:
   min_gpa:
     all_majors: 3.4
@@ -26,13 +26,13 @@ requirements:
     - Nursing Science
     - all majors in the Donald Bren School of Information and Computer Sciences
   excluded_majors_fall_2028_additions:
-    - Biological Sciences, Biology/Education, Ecology and Evolutionary Biology (School of Biological Sciences)
-    - Art, Dance, Music B.Mus (School of the Arts)
-    - all majors, Donald Bren School of Information and Computer Sciences
-    - Aerospace Engineering, Computer Engineering, Electrical Engineering, Mechanical Engineering (Engineering)
-    - Business Administration (Merage)
-    - Nursing Science
-    - Psychology B.A. (Social Ecology); Business Economics, Cognitive Sciences, Economics, Psychology B.S., Quantitative Economics (Social Sciences)
+    - Biological Sciences, Biology/Education, Ecology and Evolutionary Biology (Charlie Dunlop School of Biological Sciences)
+    - Art, Dance, Music B.Mus (Claire Trevor School of the Arts)
+    - all majors, Donald Bren School of Information & Computer Sciences
+    - Aerospace Engineering, Computer Engineering, Electrical Engineering, Mechanical Engineering (Henry Samueli School of Engineering)
+    - Business Administration (Paul Merage School of Business)
+    - Nursing Science (Sue And Bill Gross School of Nursing)
+    - Psychology B.A. (School of Social Ecology); Business Economics, Cognitive Sciences, Economics, Psychology B.S., Quantitative Economics (School of Social Sciences)
   not_eligible:
     - students who have baccalaureate degrees
     - students attending high school in the fall term of the TAG year, even if simultaneously enrolled at a CCC
