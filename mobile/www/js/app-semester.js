@@ -178,9 +178,24 @@ function sem_applyDict() {
 }
 
 /* ---------------- 纯逻辑（可在 Node 里用真实数据单测） ---------------- */
+/* 课程键带学校归属（"学校|FLAT"）：同一代码在两所 CC 可能对应不同协议，
+ * planner 内部一律用带归属的键，显示时再拆出课号与学校。 */
+function sem_pairKey(cc, flat) { return cp_normLabel(cc || "") + "|" + (flat || ""); }
+function sem_flatOf(key) { var i = (key || "").indexOf("|"); return i < 0 ? (key || "") : key.slice(i + 1); }
+function sem_ccOf(key) { var i = (key || "").indexOf("|"); return i < 0 ? "" : key.slice(0, i); }
+/* 从 cp_compare 结果重建带归属的已修课集合 */
+function sem_takenSet(result) {
+  var s = new Set();
+  var perCc = (result && result.student_courses_by_cc) || [];
+  for (var i = 0; i < perCc.length; i++)
+    for (var j = 0; j < (perCc[i].courses || []).length; j++)
+      s.add(sem_pairKey(perCc[i].cc_name, cp_normCode(perCc[i].courses[j]).replace(/ /g, "")));
+  return s;
+}
 /* 把一份报告的 articulated 映射按“目标课程要求 → 课组”还原。
  * 与 cp_groupArticulated / cp_compareOne 相同的组语义：组之间任选其一（Or），
- * And 组内都要修，Or 组内任选其一。返回 {target_code: [{conj, codes[]}]}。 */
+ * And 组内都要修，Or 组内任选其一。返回 {target_code: [{conj, codes[]}]}。
+ * codes 里是带归属的键（"学校|FLAT"），同一代码在两所学校算两个候选。 */
 function sem_buildGroups(report) {
   var groups = {};
   var ms = (report && report.mappings) || [];
@@ -188,7 +203,7 @@ function sem_buildGroups(report) {
     var m = ms[i];
     if (m.status !== "articulated" || !m.target_code) continue;
     var g = cp_parseGroup(m.section);
-    var code = cp_normCode(m.cc_code);
+    var code = sem_pairKey(m.source_cc || (report && report.cc_name) || "", cp_normCode(m.cc_code).replace(/ /g, ""));
     if (!code) continue;
     if (!groups[m.target_code]) groups[m.target_code] = {};
     if (!groups[m.target_code][g[0]]) groups[m.target_code][g[0]] = { conj: g[1], codes: [] };
@@ -231,6 +246,9 @@ function sem_collectReqs(result, reportsByTarget) {
  * 返回按挑选顺序排列的课号（均为规范化课号）。 */
 function sem_pickOrder(reqs, takenSet, unitsMap) {
   var have = new Set(takenSet);
+  /* 同一课号在两所学校只排一次：已修/已选按课号（不带学校）去重 */
+  var haveFlat = new Set();
+  have.forEach(function (k) { haveFlat.add(sem_flatOf(k)); });
   var uncovered = reqs.slice();
   var order = [], used = new Set();
   var guard = 0;
@@ -242,6 +260,7 @@ function sem_pickOrder(reqs, takenSet, unitsMap) {
         for (var c = 0; c < uncovered[i].groups[g].codes.length; c++) {
           var code = uncovered[i].groups[g].codes[c];
           if (!code || have.has(code) || used.has(code) || seen[code]) continue;
+          if (haveFlat.has(sem_flatOf(code)) || used.has(sem_flatOf(code))) continue;
           seen[code] = 1;
           score[code] = (score[code] || 0) + 1;
         }
@@ -258,7 +277,9 @@ function sem_pickOrder(reqs, takenSet, unitsMap) {
     var pick = codes[0];
     order.push(pick);
     used.add(pick);
+    used.add(sem_flatOf(pick));
     have.add(pick);
+    haveFlat.add(sem_flatOf(pick));
     uncovered = uncovered.filter(function (r) { return !sem_reqDone(r, have); });
   }
   return order;
@@ -315,20 +336,29 @@ function sem_build() {
   S.noArt = []; S.noAgree = []; S.nSem = 4; S.flash = "";
   if (!form.cc_name || !(form.targets || []).length) { S.loaded = true; sem_render(); return; }
   var taken = (form.courses || "").split(/[\n,，;；]+/).map(function (s) { return s.trim(); }).filter(Boolean);
+  var taken2 = (form.courses2 || "").split(/[\n,，;；]+/).map(function (s) { return s.trim(); }).filter(Boolean);
   var reports = cp_loadReports();
-  var result = cp_compare(form.cc_name, form.major_query || "", form.targets, taken);
+  var result = cp_compare(form.cc_name, form.major_query || "", form.targets, taken, form.cc2_name || "", taken2);
   S.result = result;
   var reportsByTarget = {}, units = {}, titles = {}, covers = {};
   for (var t = 0; t < result.targets.length; t++) {
     var tt = result.targets[t];
     if (tt.status !== "ok") { S.noAgree.push(tt.target_name); continue; }
-    var rep = cp_findReport(reports, form.cc_name, tt.target_name, form.major_query || "");
+    /* 两所学校的目标报告先合并（带 source_cc），再按组还原要求 */
+    var reps = [];
+    var rep1 = cp_findReport(reports, form.cc_name, tt.target_name, form.major_query || "");
+    if (rep1) reps.push(rep1);
+    if (form.cc2_name) {
+      var rep2 = cp_findReport(reports, form.cc2_name, tt.target_name, form.major_query || "");
+      if (rep2 && rep2 !== rep1) reps.push(rep2);
+    }
+    var rep = reps.length > 1 ? cp_mergeReports(reps) : (reps[0] || null);
     reportsByTarget[tt.target_name] = rep;
     if (!rep) continue;
     for (var m = 0; m < rep.mappings.length; m++) {
       var map = rep.mappings[m];
       if (map.status !== "articulated" || !map.cc_code) continue;
-      var nc = cp_normCode(map.cc_code);
+      var nc = sem_pairKey(map.source_cc || rep.cc_name || "", cp_normCode(map.cc_code).replace(/ /g, ""));
       var u = parseFloat(map.cc_units);
       if (!isNaN(u) && u > 0) units[nc] = Math.max(units[nc] || 0, u);
       if (!titles[nc]) titles[nc] = map.cc_title || "";
@@ -355,7 +385,7 @@ function sem_build() {
   }
   S.covers = covers;
   S.fp = JSON.stringify({
-    cc: form.cc_name, major: form.major_query || "",
+    cc: form.cc_name, cc2: form.cc2_name || "", major: form.major_query || "",
     targets: (form.targets || []).slice().sort(), taken: result.student_courses
   });
   /* 恢复已存的手动调整；表单变了就重新排。 */
@@ -363,7 +393,7 @@ function sem_build() {
   try {
     var saved = JSON.parse(localStorage.getItem(SEM_LS_KEY) || "null");
     if (saved && saved.fp === S.fp && Array.isArray(saved.sems) && Array.isArray(saved.order)) {
-      var order = sem_pickOrder(S.reqs, new Set(result.student_courses), S.units);
+      var order = sem_pickOrder(S.reqs, sem_takenSet(result), S.units);
       var flat = [];
       saved.sems.forEach(function (arr) { (arr || []).forEach(function (c) { flat.push(c); }); });
       (saved.unplaced || []).forEach(function (c) { flat.push(c); });
@@ -379,7 +409,7 @@ function sem_build() {
     }
   } catch (e) { /* 忽略，重新排 */ }
   if (!restored) {
-    S.order = sem_pickOrder(S.reqs, new Set(result.student_courses), S.units);
+    S.order = sem_pickOrder(S.reqs, sem_takenSet(result), S.units);
     var p = sem_pack(S.order, S.units, S.nSem, SEM_CAP);
     S.sems = p.sems; S.unplaced = p.unplaced;
     sem_save();
@@ -427,7 +457,7 @@ function sem_addBack(code) {
 function sem_rebuild() {
   var nEl = document.getElementById("semN");
   if (nEl) S.nSem = Math.max(1, Math.min(8, parseInt(nEl.value, 10) || 4));
-  S.order = sem_pickOrder(S.reqs, new Set(S.result.student_courses), S.units);
+  S.order = sem_pickOrder(S.reqs, sem_takenSet(S.result), S.units);
   var p = sem_pack(S.order, S.units, S.nSem, SEM_CAP);
   S.sems = p.sems; S.unplaced = p.unplaced;
   sem_save(); sem_render();
@@ -448,7 +478,11 @@ function sem_setN(n) {
 function sem_courseRow(code, semIdx) {
   var u = S.units[code];
   var unitLabel = (u === undefined) ? sem_t("no_units") : sem_fmtUnits(u) + "u";
-  var h = '<div class="req"><span class="code">' + sem_esc(code) + '</span>'
+  /* 带归属的键显示为“课号（学校）”，如 MATH 1A (De Anza College) */
+  var disp = sem_flatOf(code).replace(/([A-Za-z]+)(\d)/, "$1 $2");
+  var ccName = sem_ccOf(code);
+  var h = '<div class="req"><span class="code">' + sem_esc(disp) + '</span>'
+    + (ccName ? ' <span class="hint">(' + sem_esc(ccName) + ')</span>' : '')
     + ' <span class="ttl">' + sem_esc(S.titles[code] || "") + '</span>'
     + ' <span class="tag">' + sem_esc(unitLabel) + '</span>'
     + '<div class="hint">' + sem_esc(sem_t("covers")) + (/^zh|^ja/.test(SEM_LANG || "") ? '：' : ': ') + sem_esc(sem_coversText(code)) + '</div>'
@@ -471,7 +505,9 @@ function sem_render() {
       + '<div class="btn-row" style="margin-top:12px"><a class="btn" style="text-align:center;text-decoration:none" href="compare.html">' + sem_esc(sem_t("back")) + '</a></div></div>';
     return;
   }
-  var h = '<div class="hint">' + sem_esc(S.form.cc_name) + ' → ' + sem_esc(S.form.major_query || "")
+  var h = '<div class="hint">' + sem_esc(S.form.cc_name)
+    + (S.form.cc2_name ? ' + ' + sem_esc(S.form.cc2_name) : '')
+    + ' → ' + sem_esc(S.form.major_query || "")
     + ' · ' + S.result.targets.map(function (x) { return sem_esc(x.target_name); }).join("、") + '</div>';
   if (S.noAgree.length)
     h += '<div class="hint" style="margin-top:6px">' + sem_esc(sem_t("noagree_note", { names: S.noAgree.join("、") })) + '</div>';
