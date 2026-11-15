@@ -137,6 +137,9 @@ var PLAN_I18N = {
   }
 };
 
+/* 列表分隔符：中日文用顿号，其余语言用逗号 */
+function sem_sep() { return /^zh|^ja/.test(SEM_LANG || "") ? "、" : ", "; }
+
 /* ---------------- 语言 ---------------- */
 function sem_pickPlanLang() {
   try {
@@ -151,8 +154,8 @@ function sem_pickPlanLang() {
   if (nav.indexOf("ko") === 0) return "ko";
   if (nav.indexOf("ja") === 0) return "ja";
   if (nav.indexOf("es") === 0) return "es";
-  if (nav.indexOf("en") === 0) return "en";
-  return "zh-CN";
+  if (nav.indexOf("zh") === 0) return "zh-CN";
+  return "en";
 }
 var SEM_LANG = sem_pickPlanLang();
 
@@ -472,9 +475,9 @@ function sem_render() {
     return;
   }
   var h = '<div class="hint">' + sem_esc(S.form.cc_name) + ' → ' + sem_esc(S.form.major_query || "")
-    + ' · ' + S.result.targets.map(function (x) { return sem_esc(x.target_name); }).join("、") + '</div>';
+    + ' · ' + S.result.targets.map(function (x) { return sem_esc(x.target_name); }).join(sem_sep()) + '</div>';
   if (S.noAgree.length)
-    h += '<div class="hint" style="margin-top:6px">' + sem_esc(sem_t("noagree_note", { names: S.noAgree.join("、") })) + '</div>';
+    h += '<div class="hint" style="margin-top:6px">' + sem_esc(sem_t("noagree_note", { names: S.noAgree.join(sem_sep()) })) + '</div>';
   if (!S.reqs.length) {
     h += '<div class="card" style="margin-top:12px"><div class="hint">✅ ' + sem_esc(sem_t("all_done")) + '</div></div>';
   } else {
@@ -512,7 +515,7 @@ function sem_render() {
     h += '</div>';
   }
   if (S.unplannable.length)
-    h += '<div class="alert">' + sem_esc(sem_t("unplannable_note", { list: S.unplannable.join("、") })) + '</div>';
+    h += '<div class="alert">' + sem_esc(sem_t("unplannable_note", { list: S.unplannable.join(sem_sep()) })) + '</div>';
   box.innerHTML = h;
   var nEl = document.getElementById("semN");
   if (nEl) nEl.addEventListener("change", function () { sem_setN(parseInt(nEl.value, 10)); });

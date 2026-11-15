@@ -78,14 +78,14 @@ function cmp_diffPlan(id) {
   };
   fld(t("f_cc"), old.cc_name, cur.cc_name);
   fld(t("f_major2"), old.major_query, cur.major_query);
-  fld(t("f_targets"), (old.targets || []).join("、"), (cur.targets || []).join("、"));
+  fld(t("f_targets"), (old.targets || []).join(t_sep()), (cur.targets || []).join(t_sep()));
   fld(t("f_gpa"), old.gpa, cur.gpa);
   let html = `<div class="card"><div class="section-title">${cmp_escape(t("diff_title", { name: p.name }))}</div>`;
   if (meta.length) html += meta.map(m => `<div class="req"><div class="hint">${cmp_escape(m)}</div></div>`).join("");
   html += `<div class="hint" style="margin-top:6px">${cmp_escape(t("diff_course_sec"))}</div>`;
   const cl = [];
-  if (added.length) cl.push(`<div class="diff-add">+ ${cmp_escape(added.join("、"))}</div>`);
-  if (removed.length) cl.push(`<div class="diff-del">− ${cmp_escape(removed.join("、"))}</div>`);
+  if (added.length) cl.push(`<div class="diff-add">+ ${cmp_escape(added.join(t_sep()))}</div>`);
+  if (removed.length) cl.push(`<div class="diff-del">− ${cmp_escape(removed.join(t_sep()))}</div>`);
   html += cl.join("") || `<div class="hint">${cmp_escape(t("diff_same"))}</div>`;
   html += `</div>`;
   const box = document.getElementById("planDiff");
@@ -496,8 +496,8 @@ function cmp_admitBadge(d, tt) {
        <div class="hint">💡 ${cmp_escape(t("admit_tip"))}</div>` : "";
   return `<div class="section-title">${cmp_escape(t("admit_title"))} · UCLA Transfer Profile ${cmp_escape((typeof ADMIT_DATA !== "undefined" && ADMIT_DATA.cycle) || "")}</div>
     <div class="req"><span class="code">${cmp_escape(m.n)}</span>
-      <div class="ttl">${cmp_escape(t("admit_rate"))}：${cmp_escape(rate)} · ${cmp_escape(t("admit_applicants", { n: m.a === null ? "?" : m.a }))}</div>
-      <div class="hint">${cmp_escape(t("admit_gpa"))}：${cmp_escape(gpa)}</div>
+      <div class="ttl">${cmp_escape(t("admit_rate"))}${t_colon()}${cmp_escape(rate)} · ${cmp_escape(t("admit_applicants", { n: m.a === null ? "?" : m.a }))}</div>
+      <div class="hint">${cmp_escape(t("admit_gpa"))}${t_colon()}${cmp_escape(gpa)}</div>
     </div>${imp}`;
 }
 
@@ -638,7 +638,7 @@ function cmp_actionPlan(d) {
     : "";
   const rows = cmp_needList(d)
     .map(e => `<div class="req"><span class="code">${cmp_escape(e.code)}</span>`
-      + `<div class="hint">→ ${cmp_escape(e.targets.join("、"))} · ${cmp_escape(t("plan_need_n", { n: e.targets.length }))}</div></div>`)
+      + `<div class="hint">→ ${cmp_escape(e.targets.join(t_sep()))} · ${cmp_escape(t("plan_need_n", { n: e.targets.length }))}</div></div>`)
     .join("");
   const waste = new Map(); /* normCode -> {code, targets:[]} */
   for (const tt of d.targets) {
@@ -652,7 +652,7 @@ function cmp_actionPlan(d) {
     }
   }
   const wasteHtml = [...waste.values()].map(e =>
-    `<div class="risk">⚠️ ${cmp_escape(e.code)}${cmp_escape(t("waste_at", { t: e.targets.join("、") }))}</div>`
+    `<div class="risk">⚠️ ${cmp_escape(e.code)}${cmp_escape(t("waste_at", { t: e.targets.join(t_sep()) }))}</div>`
   ).join("");
   const body = (rows || wasteHtml)
     ? (wasteHtml + (rows || `<div class="hint">${cmp_escape(t("plan_empty"))}</div>`) + excl)
@@ -719,6 +719,7 @@ function cmp_chanceCell(ch) {
 /* TAG 一致性：六校 TAG 的 GPA 门槛 vs 用户 GPA + 专业排除名单关键词核对。
  * showUci2028 为 true（对比目标含 UCI）时，另附 Fall 2028 未来提示：
  * 只展示 TAG_CHANCE 里的 future_excluded_2028，不参与任何判定。 */
+const CMP_TAGCS_IDS = ["uc-merced", "uc-riverside", "uc-santa-cruz"];
 function cmp_tagStrip(majorQuery, gpa, showUci2028) {
   const campuses = (typeof TAG_CHANCE !== "undefined" && TAG_CHANCE.campuses) || [];
   if (!campuses.length) return "";
@@ -739,9 +740,14 @@ function cmp_tagStrip(majorQuery, gpa, showUci2028) {
       else if (gpa >= glo) { badge = `<span class="st warn">⚠️</span>`; note = t("tag_partial_note"); }
       else { badge = `<span class="st warn">⚠️</span>`; note = t("tag_below_note", { g: glo }); }
     } else {
-      badge = `<span class="st no_agreement">—</span>`;
+      /* 没填 GPA（或该校无 GPA 门槛）：写明含义，不再留裸 "—" */
+      badge = `<span class="st no_agreement">${cmp_escape(t("tag_not_excluded"))}</span>`;
+      if (gpa == null) note = t("tag_enter_gpa");
     }
     if (!exclHit && (c.excluded || []).length) note += (note ? " " : "") + t("tag_check_excl");
+    /* 计算机科学：官方 TAG matrix / 校方 TAG 页面核实过的逐校说明（见 UPDATING.md） */
+    if (!exclHit && /\b(computer science|cs|cse)\b/i.test(q) && CMP_TAGCS_IDS.indexOf(c.id) !== -1)
+      note += (note ? " " : "") + t("tagcs_" + c.id);
     return `<div class="req"><span class="code">${cmp_escape(c.name)}</span> ${badge}`
       + `<div class="hint">TAG GPA ${cmp_escape(gpaTxt)}${note ? " · " + cmp_escape(note) : ""}</div></div>`;
   }).join("");
@@ -973,7 +979,7 @@ function cmp_goldenPath(d) {
   const haveFlat = new Set(_cmpFullCourses.map(c => c.replace(/ /g, "")));
   const rows = path.map((p, i) => {
     const has = haveFlat.has(p.course.replace(/ /g, ""));
-    const covList = p.covers.map(r => `${cmp_escape(r.target)} ${cmp_escape(r.code)}`).join("、");
+    const covList = p.covers.map(r => `${cmp_escape(r.target)} ${cmp_escape(r.code)}`).join(t_sep());
     return `<div class="gp-row"><span class="gp-num">${i + 1}</span>`
       + `<span class="code">${cmp_escape(p.course)}</span>`
       + (has ? `<span class="tag have">✓</span>` : `<span class="tag need">+${p.covers.length}</span>`)
@@ -1035,7 +1041,7 @@ function cmp_render(d) {
     }).join("");
 
     const wasted = (tt.wasted || []).length
-      ? `<div class="risk">⚠️ ${cmp_escape(t("wasted_warn"))}：${tt.wasted.map(w => cmp_escape(w.cc_code)).join("、")} —— ${cmp_escape(tt.wasted[0].note)}</div>`
+      ? `<div class="risk">⚠️ ${cmp_escape(t("wasted_warn"))}${t_colon()}${tt.wasted.map(w => cmp_escape(w.cc_code)).join(t_sep())} — ${cmp_escape(tt.wasted[0].note)}</div>`
       : "";
     const afterTransfer = (tt.must_take_after_transfer || []).length
       ? `<div class="section-title">${cmp_escape(t("sec_after_transfer"))}</div>` +

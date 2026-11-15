@@ -513,3 +513,15 @@ details.more summary { font-size: 14px; color: var(--brand1); cursor: pointer; p
 .whatif-grade-row select { flex: 1 1 46%; min-width: 0; }
 .whatif-grade-row input { flex: 1 1 54%; min-width: 0; }
 #whatif_live { margin-top: 8px; min-height: 0; }
+
+/* Narrow phones (360px): keep result cards inside the viewport; tables scroll inside their own box. */
+.cmp-head > div:first-child { min-width: 0; flex: 1 1 0; overflow-wrap: anywhere; }
+.fresh-badge { display: inline-block; max-width: 100%; white-space: normal; }
+.tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+@media (max-width: 420px) {
+  .sum-table { font-size: 13px; }
+  .sum-table th, .sum-table td { padding: 8px 4px; }
+  .sum-table th { white-space: normal; }
+  .exp-toggle { padding: 6px 0; }
+}
+.btn, .langswitch button, .tabbar a { min-height: 44px; }

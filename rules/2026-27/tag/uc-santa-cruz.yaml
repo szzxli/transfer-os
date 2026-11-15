@@ -3,7 +3,7 @@ program: TAG
 academic_year: 2026-27
 admission_cycle: Fall 2027
 source: https://admissions.ucsc.edu/transfer-admission-guarantee-tag
-verified_date: 2026-10-15
+verified_date: 2026-11-15
 requirements:
   min_gpa:
     all_majors: 3.0
@@ -21,7 +21,7 @@ requirements:
   grade_floor:
     - be in good academic standing (not on probation or dismissal) for ALL colleges attended
     - earn no grades lower than C (2.0) in UC-transferable coursework for the fall, winter, and/or spring terms after TAG submission and prior to transfer
-  excluded_majors: unknown
+  excluded_majors: []  # 2027-28 TAG matrix (accurate as of 2026-06-09): "All majors now open for TAG"; UCSC TAG page lists none excluded.
   not_eligible:
     - students in or approaching senior standing: more than 80 semester (120 quarter) units of combined lower- and upper-division coursework after UC transfer credit limitations (CCC-only students are not affected)
     - former UC students not in good standing at the UC campus attended (less than 2.0 GPA at UC)
@@ -32,5 +32,5 @@ requirements:
   uc_application_deadline: November 30
   tag_major_must_match_uc_app_major: unknown
   notes:
-    - Conflicting sources on Computer Science TAG eligibility: Fall 2026 materials list CS B.A./B.S. as excluded; a recently crawled transfer-center page states all majors are now open for TAG including CS. Treat as unverified for 2026-27; confirm on the official TAG page before encoding.
+    - "Computer Science (B.A., B.S., Computer Game Design), Computer Engineering and Electrical Engineering are SCREENING majors: TAG is open (no excluded majors), but the major selection criteria in the UCSC General Catalog must be met in addition to the 3.0 GPA. Source: https://admissions.ucsc.edu/transfer-admission-guarantee-tag (fetched 2026-11-15) and the UC 2027-28 TAG matrix. This replaces an earlier 'conflicting sources' note about CS."
     - Choice of major is not guaranteed through TAG unless the major is listed under the TAG Major Preparation Selection Criteria.

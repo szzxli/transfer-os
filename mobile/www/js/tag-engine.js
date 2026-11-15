@@ -47,8 +47,8 @@ function te_loadRule(school) {
   const sid = te_normSchool(school);
   const rule = TAG_DATA[sid];
   if (!rule) {
-    const avail = te_listSchools().join(", ") || "（无）";
-    throw new Error(`未找到学校 [${school}] 的 TAG 规则。可用学校：${avail}`);
+    const avail = te_listSchools().join(", ") || "(none)";
+    throw new Error(`No TAG rules found for school [${school}]. Available: ${avail}`);
   }
   return Object.assign({ _school_id: sid }, rule);
 }
@@ -210,7 +210,7 @@ function te_checkEnglishMath(requirements, profile) {
   const checks = [];
   function one(labelKey, kindKey, code, reqs, done) {
     const L = t(labelKey), kind = t(kindKey);
-    const timing = reqs.filter(s => typeof s === "string").map(s => s.trim()).join("；");
+    const timing = reqs.filter(s => typeof s === "string").map(s => s.trim()).join(t_semi());
     if (!reqs.length)
       return te_makeCheck(code === "E" ? "english" : "math", L, TE_SKIP,
         t("d_em_skip", { kind }));
@@ -288,7 +288,7 @@ function te_checkExcludedMajors(requirements, profile) {
   }
   const futureNote = futureNotes.length ? t("d_excl_future_note", {
     cycle: [...new Set(futureNotes.map(n => n.cycle))].join(" / "),
-    list: futureNotes.map(n => n.entry).join("；"),
+    list: futureNotes.map(n => n.entry).join(t_semi()),
   }) : null;
   if (foundUnknown)
     return [te_makeCheck("excluded_major", L, TE_SKIP, t("d_excl_skip")), 
