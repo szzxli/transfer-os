@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Transfer OS</title>
-<link rel="stylesheet" href="css/app.css?v=31">
+<title data-i18n="title_home">Transfer OS</title>
+<link rel="stylesheet" href="css/app.css?v=32">
 <link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
 <meta name="theme-color" content="#132625">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -88,7 +89,7 @@
   <a href="validate.html"><span class="ico">📋</span><span data-i18n="nav_validate"></span></a>
 </nav>
 
-<script src="js/i18n.js?v=31"></script>
+<script src="js/i18n.js?v=32"></script>
 <script>
 /* One-click bug report: prefills environment into a GitHub issue */
 function idx_buglink() {
@@ -113,7 +114,9 @@ function idx_buglink() {
       + encodeURIComponent("[bug] ") + "&body=" + encodeURIComponent(body);
   });
 }
-document.addEventListener("DOMContentLoaded", function () { applyI18n(); idx_resume(); idx_buglink(); });
+initLang();
+window.__reRender = function () { idx_resume(); };
+document.addEventListener("DOMContentLoaded", function () { applyI18n(); idx_buglink(); });
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('sw.js').catch(function () {});
@@ -123,6 +126,7 @@ if ('serviceWorker' in navigator) {
 function idx_resume() {
   var slot = document.getElementById("resume-slot");
   if (!slot) return;
+  slot.innerHTML = "";
   var s = null;
   try { s = JSON.parse(localStorage.getItem("transferos_cmp_form") || "null"); } catch (e) {}
   if (!s || !s.cc_name) return;

@@ -192,18 +192,18 @@ function va_render(d) {
   const wasteLine = s.wasted_courses.length
     ? `<div class="cov-num" style="color:#e11d48">${s.wasted_units}<span style="font-size:14px;color:#888"> units</span></div>
        <div class="hint">${va_escape(t("v_wasted_units_line", { u: s.wasted_units, t: s.extra_terms_estimate }))}</div>
-       <div class="risk">⚠️ ${va_escape(s.wasted_courses.join("、"))}</div>`
+       <div class="risk">⚠️ ${va_escape(s.wasted_courses.join(t_sep()))}</div>`
     : `<div class="hint">${va_escape(t("v_no_waste"))}</div>`;
   const atRisk = s.at_risk_courses.length
-    ? `<div class="hint">❓ ${va_escape(t("v_at_risk_line", { n: s.at_risk_courses.length }))}：${va_escape(s.at_risk_courses.join("、"))}</div>`
+    ? `<div class="hint">❓ ${va_escape(t("v_at_risk_line", { n: s.at_risk_courses.length }))}${t_colon()}${va_escape(s.at_risk_courses.join(t_sep()))}</div>`
     : "";
   const noAg = (d.no_agreement_targets || []).length
-    ? `<div class="hint">ℹ️ ${va_escape(t("v_no_agreement_line", { list: d.no_agreement_targets.join("、") }))}</div>`
+    ? `<div class="hint">ℹ️ ${va_escape(t("v_no_agreement_line", { list: d.no_agreement_targets.join(t_sep()) }))}</div>`
     : "";
   const geLine = (s.ge_courses || []).length
     ? `<div class="hint">${va_escape(t("v_ge_line", {
         n: s.ge_courses.length,
-        list: s.ge_courses.map(g => `${g.code}(${g.areas.join("、")})`).join("、"),
+        list: s.ge_courses.map(g => `${g.code}(${g.areas.join(t_sep())})`).join(t_sep()),
       }))}</div>`
     : "";
   html += `<div class="card">
@@ -221,7 +221,7 @@ function va_render(d) {
         ? `<span class="st ok">${va_escape(t("ge_done"))}</span>`
         : `<span class="st warn">${va_escape(t("ge_missing", { n: a.need - a.courses.length }))}</span>`;
       const used = a.courses.length
-        ? `<div class="hint">${va_escape(a.courses.join("、"))}</div>` : "";
+        ? `<div class="hint">${va_escape(a.courses.join(t_sep()))}</div>` : "";
       return `<div class="req"><span class="code">${va_escape(a.code)}</span> ${va_escape(nm)} ${st}${used}</div>`;
     }).join("");
     const banner = ge.all_done ? `<div class="hint">${va_escape(t("ge_all_done"))}</div>` : "";

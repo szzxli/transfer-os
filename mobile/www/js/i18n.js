@@ -12,6 +12,10 @@ zh: {
 app_tag_sub: "加州大学转学保证计划 · 规则引擎判定，仅供参考",
 app_cmp_sub: "同一批课，在不同 UC 认可程度一目了然 · ASSIST 公开协议数据",
 title_compare: "Transfer OS · 课程对比",
+title_tag: "Transfer OS · TAG 检查",
+title_validate: "Transfer OS · 计划校验",
+title_home: "Transfer OS",
+
 nav_tag: "TAG 检查", nav_compare: "课程对比",
 nav_home: "首页",
 app_home_sub: "加州社区大学转 UC 工具箱",
@@ -189,6 +193,11 @@ ch_f_trend_down: p => `申请人数同比 ${p.p}%（竞争放缓）`,
 ch_f_trend_flat: p => `申请人数同比 ${p.p}%`,
 tag_strip_title: "🛡️ TAG 保底一致性",
 tag_strip_tip: "TAG 保录六校（Davis、Irvine、Merced、Riverside、Santa Barbara、Santa Cruz）的 GPA 门槛与你的 GPA 对照；注意：这六校与你上面选的对比目标是两组不同的学校。专业排除名单为关键词匹配，请以官网为准",
+tag_not_excluded: "未列入排除名单",
+tag_enter_gpa: "填入你的 GPA 才能和门槛比对。",
+"tagcs_uc-merced": "计算机科学属于 Engineering 学院：TAG 开放（所有专业均可 TAG），GPA 门槛 3.0，另需完成该专业的先修课。来源：UC 2027-28 TAG matrix。",
+"tagcs_uc-riverside": "计算机科学属于 Bourns Engineering：TAG 开放，GPA 门槛 3.6，且需完成专业预备课（成绩 C 以上）。来源：UC 2027-28 TAG matrix。",
+"tagcs_uc-santa-cruz": "计算机科学（B.A./B.S.）是 UCSC 的筛选专业：TAG 开放（没有被排除的专业），GPA 3.0，另须满足该专业的选拔标准。来源：UC 2027-28 TAG matrix 与 UCSC TAG 页面。",
 tag_no: "不可TAG",
 tag_excluded_note: "该专业在排除名单中",
 tag_partial_note: "部分学院/专业达标",
@@ -230,7 +239,7 @@ plan_load: "载入",
 plan_del: "删除",
 plans_empty: "还没有保存的规划，填好表单后点保存",
 scope_title: "数据覆盖说明",
-scope_body: "课程映射：50 所社区大学 × 6 所 UC（Berkeley / UCLA / San Diego / Davis / Irvine / Santa Cruz；ASSIST 公开 articulation 协议；UCB、UCSD、UCSC 为 2026-2027 学年，UCLA、UCD、UCI 为 2025-2026 学年，卡片上有标注）。录取参考：UCLA 官方 Transfer Profile（Fall 2025，133 个专业；含 Fall 2024 申请趋势）。TAG 规则：TAG 保录六校 2026-27 申请季官方要求。数据更新：2026-10-17；仅供规划参考，以学校官网为准。",
+scope_body: "课程映射：50 所社区大学 × 6 所 UC（Berkeley / UCLA / San Diego / Davis / Irvine / Santa Cruz），共 108 个 UC 专业；数据来自 ASSIST 公开 articulation 协议，完整名单见 ucplan.org/coverage。数据年份：UCB、UCSD、UCSC 为 2026-2027 学年；UCD 为 2025-2026 学年；UCLA 和 UCI 两个学年都有（UCLA 的 2026-2027 目前覆盖 50 所中的 30 所），年份标在每张结果卡片上。录取参考：UCLA 官方 Transfer Profile（Fall 2025，列出 UCLA 的 133 个专业）——这是另一份参考数据，不是本工具覆盖的专业数。TAG 规则：六校，2026-27 申请季。更新于 2026-10-17；仅供规划参考，请以官网为准。",
 no_report_for_cc: "该 CC 暂无已抓取的协议数据",
 /* ---------- TAG 结果 ---------- */
 sec_checks: "逐项检查", sec_risks: "风险提示", sec_keydates: "关键时间",
@@ -359,6 +368,9 @@ en: {
 app_tag_sub: "UC Transfer Admission Guarantee · rule-engine based, for reference only",
 app_cmp_sub: "See how the same courses count at different UCs · public ASSIST data",
 title_compare: "Transfer OS · Course Comparison",
+title_tag: "Transfer OS · TAG Check",
+title_validate: "Transfer OS · Plan Validator",
+title_home: "Transfer OS",
 nav_tag: "TAG Check", nav_compare: "Compare",
 nav_home: "Home",
 app_home_sub: "CCC-to-UC transfer toolkit",
@@ -536,6 +548,11 @@ ch_f_trend_down: p => `applicants ${p.p}% YoY (less competitive)`,
 ch_f_trend_flat: p => `applicants ${p.p}% YoY`,
 tag_strip_title: "🛡️ TAG backup check",
 tag_strip_tip: "GPA thresholds at the six TAG campuses (Davis, Irvine, Merced, Riverside, Santa Barbara, Santa Cruz) vs your GPA. Note: these six TAG campuses are a different set from the comparison targets you picked above. Major-exclusion matching is keyword-based — verify on official pages",
+tag_not_excluded: "Not on excluded list",
+tag_enter_gpa: "Enter your GPA to compare with the threshold.",
+"tagcs_uc-merced": "Computer Science is in the School of Engineering: TAG is open (all majors are open), minimum GPA 3.0, plus the major's prerequisite courses. Source: UC 2027-28 TAG matrix.",
+"tagcs_uc-riverside": "Computer Science is in Bourns Engineering: TAG is open, minimum GPA 3.6, and major-preparation courses (grade C or better) are required. Source: UC 2027-28 TAG matrix.",
+"tagcs_uc-santa-cruz": "Computer Science (B.A./B.S.) is a UCSC screening major: TAG is open (no excluded majors), GPA 3.0, plus the major's selection criteria. Source: UC 2027-28 TAG matrix and the UCSC TAG page.",
 tag_no: "No TAG",
 tag_excluded_note: "major on the exclusion list",
 tag_partial_note: "meets some colleges/majors",
@@ -577,7 +594,7 @@ plan_load: "Load",
 plan_del: "Delete",
 plans_empty: "No saved plans yet — fill the form and hit Save",
 scope_title: "Data coverage",
-scope_body: "Course mappings: 50 community colleges × 6 UCs (Berkeley / UCLA / San Diego / Davis / Irvine / Santa Cruz; public ASSIST articulation agreements; 2026-2027 for UCB/UCSD/UCSC, 2025-2026 for UCLA/UCD/UCI as labeled per card). Admit reference: UCLA official Transfer Profile (Fall 2025, 133 majors; with Fall 2024 applicant trend). TAG rules: six campuses, 2026-27 cycle. Updated 2026-10-17; for planning reference only — verify on official sites.",
+scope_body: "Course mappings: 50 community colleges × 6 UCs (Berkeley / UCLA / San Diego / Davis / Irvine / Santa Cruz), 108 UC majors in total, from public ASSIST articulation agreements. Full lists: ucplan.org/coverage. Data years: UC Berkeley, UC San Diego and UC Santa Cruz are 2026-2027; UC Davis is 2025-2026; UCLA and UC Irvine have both years (UCLA 2026-2027 covers 30 of the 50 colleges so far), and the year is shown on every result card. Admit reference: UCLA official Transfer Profile (Fall 2025), which lists 133 UCLA majors — a separate reference, not a count of the majors covered here. TAG rules: six campuses, 2026-27 cycle. Updated 2026-10-17; for planning reference only — verify on official sites.",
 no_report_for_cc: "No agreement data fetched for this college yet",
 /* ---------- TAG 结果 ---------- */
 sec_checks: "Requirement Checks", sec_risks: "Risk Warnings", sec_keydates: "Key Dates",
@@ -706,6 +723,9 @@ es: {
 app_tag_sub: "Garantía de admisión por transferencia de UC · evaluado por motor de reglas, solo de referencia",
 app_cmp_sub: "Ve cómo cuentan los mismos cursos en distintas UC · datos públicos de ASSIST",
 title_compare: "Transfer OS · Comparación de cursos",
+title_tag: "Transfer OS · Verificación TAG",
+title_validate: "Transfer OS · Validador de plan",
+title_home: "Transfer OS",
 nav_tag: "Verificar TAG", nav_compare: "Comparar",
 nav_home: "Inicio",
 app_home_sub: "Kit de transferencia CCC → UC",
@@ -883,6 +903,11 @@ ch_f_trend_down: p => `solicitantes ${p.p}% interanual (menos competencia)`,
 ch_f_trend_flat: p => `solicitantes ${p.p}% interanual`,
 tag_strip_title: "🛡️ Verificación TAG",
 tag_strip_tip: "Umbrales de GPA de los seis campus TAG (Davis, Irvine, Merced, Riverside, Santa Barbara, Santa Cruz) frente a tu GPA. Nota: estos seis campus TAG son un conjunto distinto de los destinos de comparación elegidos arriba. La exclusión de carreras es por palabras clave — verifícala en las páginas oficiales",
+tag_not_excluded: "No está en la lista de excluidas",
+tag_enter_gpa: "Ingresa tu GPA para compararlo con el umbral.",
+"tagcs_uc-merced": "Ciencias de la Computación está en la School of Engineering: el TAG está abierto (todas las carreras), GPA mínimo 3.0, más los cursos prerrequisito de la carrera. Fuente: matriz TAG 2027-28 de UC.",
+"tagcs_uc-riverside": "Ciencias de la Computación está en Bourns Engineering: el TAG está abierto, GPA mínimo 3.6 y se exigen cursos de preparación de la carrera (nota C o mejor). Fuente: matriz TAG 2027-28 de UC.",
+"tagcs_uc-santa-cruz": "Ciencias de la Computación (B.A./B.S.) es una carrera con selección en UCSC: el TAG está abierto (sin carreras excluidas), GPA 3.0, más los criterios de selección de la carrera. Fuente: matriz TAG 2027-28 de UC y la página TAG de UCSC.",
 tag_no: "Sin TAG",
 tag_excluded_note: "carrera en la lista de exclusión",
 tag_partial_note: "cumple en algunas facultades/carreras",
@@ -924,7 +949,7 @@ plan_load: "Cargar",
 plan_del: "Eliminar",
 plans_empty: "Aún no hay planes guardados — completa el formulario y pulsa Guardar",
 scope_title: "Cobertura de datos",
-scope_body: "Mapeos de cursos: 50 universidades comunitarias × 6 UC (Berkeley / UCLA / San Diego / Davis / Irvine / Santa Cruz; convenios públicos ASSIST; 2026-2027 para UCB/UCSD/UCSC, 2025-2026 para UCLA/UCD/UCI según tarjeta). Referencia de admisión: Transfer Profile oficial de UCLA (Fall 2025, 133 carreras; con tendencia Fall 2024). Reglas TAG: seis universidades, ciclo 2026-27. Actualizado 2026-10-17; solo referencia — verifica en sitios oficiales.",
+scope_body: "Mapeos de cursos: 50 community colleges × 6 UC (Berkeley / UCLA / San Diego / Davis / Irvine / Santa Cruz), 108 carreras de UC en total, a partir de los convenios públicos de ASSIST. Listas completas: ucplan.org/coverage. Años de los datos: UC Berkeley, UC San Diego y UC Santa Cruz son 2026-2027; UC Davis es 2025-2026; UCLA y UC Irvine tienen ambos años (el 2026-2027 de UCLA cubre por ahora 30 de los 50 colleges) y el año aparece en cada tarjeta de resultado. Referencia de admisión: Transfer Profile oficial de UCLA (otoño 2025), que enumera 133 carreras de UCLA — es otra referencia, no el número de carreras cubiertas aquí. Reglas TAG: seis campus, ciclo 2026-27. Actualizado 2026-10-17; solo como referencia de planificación — verifica en los sitios oficiales.",
 no_report_for_cc: "Aún no hay convenios registrados para este colegio",
 /* ---------- TAG 结果 ---------- */
 sec_checks: "Revisión por requisitos", sec_risks: "Advertencias de riesgo", sec_keydates: "Fechas clave",
@@ -1049,7 +1074,7 @@ v_st_ok: "Transferible", v_st_denied: "Denegado", v_st_unknown: "Sin verificar",
 }
 };
 
-var APP_LANG = "zh";
+var APP_LANG = "en";
 var LANG_LABEL = { zh: "中文", en: "EN", es: "ES" };
 var HTML_LANG = { zh: "zh-CN", en: "en", es: "es" };
 
@@ -1081,11 +1106,11 @@ function t(key, params) {
 }
 
 function setLang(l) {
-  if (!I18N[l]) l = "zh";
+  if (!I18N[l]) l = "en";
   APP_LANG = l;
   try { localStorage.setItem("transferos_lang", l); } catch (e) {}
   if (typeof document !== "undefined") {
-    document.documentElement.lang = HTML_LANG[l] || "zh-CN";
+    document.documentElement.lang = HTML_LANG[l] || "en";
   }
   if (typeof applyI18n === "function") applyI18n();
 }
@@ -1122,22 +1147,35 @@ function i18n_check(requiredKeys) {
   return missing;
 }
 
+/* 首次访问的默认语言：已存的手动选择优先；否则按浏览器语言：
+ * zh* → zh，es* → es，其余一律 en（英文兜底，不再默认中文）。 */
+function detectLang(navLang) {
+  var nav = String(navLang || "").toLowerCase();
+  if (nav.indexOf("zh") === 0) return "zh";
+  if (nav.indexOf("es") === 0) return "es";
+  return "en";
+}
+
 function initLang() {
   var l = "";
   try { l = localStorage.getItem("transferos_lang") || ""; } catch (e) {}
-  if (!l) {
-    /* 首次访问：按浏览器语言默认。旧逻辑永远默认中文，英文用户首屏是中文、
-     * 必须手动点 EN 才切英文。存过的偏好优先，不覆盖。 */
+  if (!I18N[l]) {
     var nav = "";
-    try { nav = (navigator.language || navigator.userLanguage || "").toLowerCase(); } catch (e) {}
-    l = nav.indexOf("es") === 0 ? "es" : nav.indexOf("en") === 0 ? "en" : "zh";
+    try {
+      nav = (navigator.languages && navigator.languages[0]) || navigator.language || navigator.userLanguage || "";
+    } catch (e) {}
+    l = detectLang(nav);
   }
-  if (!I18N[l]) l = "zh";
   APP_LANG = l;
   if (typeof document !== "undefined") {
-    document.documentElement.lang = HTML_LANG[l] || "zh-CN";
+    document.documentElement.lang = HTML_LANG[l] || "en";
   }
 }
+
+/* 列表 / 冒号 / 分号分隔符：中文用全角，其余语言用半角，避免英文界面混入中文标点 */
+function t_sep() { return APP_LANG === "zh" ? "、" : ", "; }
+function t_semi() { return APP_LANG === "zh" ? "；" : "; "; }
+function t_colon() { return APP_LANG === "zh" ? "：" : ": "; }
 
 /* Read an arriving ?ref= value from the URL only; it is never stored. */
 (function () {

@@ -129,8 +129,8 @@ def test_davis_unknown_major_match_skipped():
     assert r["eligible"] is True
 
 
-def test_santa_cruz_unknown_excluded_majors_skipped():
-    # Santa Cruz 的 excluded_majors 为 unknown → skip，不判 fail
+def test_santa_cruz_no_excluded_majors():
+    # UC 2027-28 TAG matrix: "All majors now open for TAG" (UCSC); CS is a screening major, not an excluded one
     p = {
         "gpa": 3.2,
         "major": "computer_science",
@@ -139,9 +139,8 @@ def test_santa_cruz_unknown_excluded_majors_skipped():
         "math_done": 1,
     }
     r = check_eligibility("uc-santa-cruz", p)
-    assert get_check(r, "excluded_major")["status"] == "skip"
+    assert get_check(r, "excluded_major")["status"] == "pass"
     assert r["eligible"] is True
-    assert any("不可 TAG 专业名单尚未核实" in x for x in r["risks"])
 
 
 def test_irvine_excluded_majors_multi_keys():
