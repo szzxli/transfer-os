@@ -266,9 +266,12 @@ function cmp_init() {
   applyI18n();
   cmp_countCourses();
   cmp_placeholder();
-  /* 首访自动巡游：没用过且没存过表单的新手 */
+  /* 7 步引导只在这台设备第一次打开对比页时自动出现。一开始就记下，
+   * 刷新或没点跳过也不会再挡操作；底部「新手引导」按钮仍可手动重看。
+   * 已经存过专业的回访用户也不再自动弹出。 */
   try {
-    if (!localStorage.getItem(TOUR_KEY) && !CMP_SAVED.major_query) {
+    if (!localStorage.getItem(TOUR_KEY) && !(CMP_SAVED && CMP_SAVED.major_query)) {
+      try { localStorage.setItem(TOUR_KEY, "1"); } catch (e2) { /* 存不下就只这一次 */ }
       setTimeout(tour_start, 900);
     }
   } catch (e) { /* 忽略 */ }

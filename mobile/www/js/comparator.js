@@ -200,12 +200,21 @@ function cp_mergeReports(reports) {
   return merged;
 }
 
+/* 课程框里至少有一门非空代码。空白行不算。 */
+function cp_hasCourses(courses) {
+  return (courses || []).some(c => cp_normCode(c));
+}
+
 /* 对比入口：cc2Name / studentCourses2 可选；第二所与主校相同时自动去重为单校。
+ * 第二所已选但课程框为空：不并入它的协议，结果与只选主校相同。空协议会把
+ * 第二所独有的要求算进分母（实测 Davis 20%→11%、Irvine 40%→25%）。
  * 内部按"收 N 份报告"的通用形状写（entries 数组），界面只开放第二所。 */
 function cp_compare(ccName, majorQuery, targetNames, studentCourses, cc2Name, studentCourses2) {
   const entries = [{ cc_name: ccName, courses: studentCourses }];
-  if (cc2Name && cp_normLabel(cc2Name) && cp_normLabel(cc2Name) !== cp_normLabel(ccName))
-    entries.push({ cc_name: cc2Name, courses: studentCourses2 });
+  const second = Array.isArray(studentCourses2) ? studentCourses2 : [];
+  if (cp_hasCourses(second) && cc2Name && cp_normLabel(cc2Name)
+      && cp_normLabel(cc2Name) !== cp_normLabel(ccName))
+    entries.push({ cc_name: cc2Name, courses: second });
   return cp_compareEntries(entries, majorQuery, targetNames);
 }
 
@@ -240,6 +249,22 @@ function cp_compareEntries(entries, majorQuery, targetNames) {
     targets,
     note: t("d_main_note"),
   };
+}
+
+/* 覆盖率只统计主校协议里的要求，外加其它学校已经覆盖上的要求。
+ * 两份协议的要求集合并不相同：只是把第二所并进来，学生没修到的独有要求
+ * 会把分母撑大、百分比拉低。那些要求不进分母，也不进缺失清单。 */
+function cp_scoreItems(report, mappings, items) {
+  const names = report.cc_names || [];
+  if (names.length < 2) return items;
+  const primary = cp_normLabel(names[0]);
+  const primaryCodes = new Set();
+  for (const m of mappings) {
+    if (cp_normLabel(m.source_cc) !== primary) continue;
+    if (m.target_code && (m.status === "articulated" || m.status === "no_articulation"))
+      primaryCodes.add(m.target_code);
+  }
+  return items.filter(i => primaryCodes.has(i.target_code) || i.status === "covered");
 }
 
 function cp_compareOne(report, have) {
@@ -367,22 +392,23 @@ function cp_compareOne(report, have) {
   wasted.sort((a, b) => (a.cc_code < b.cc_code ? -1 : a.cc_code > b.cc_code ? 1
     : (a.cc_name < b.cc_name ? -1 : a.cc_name > b.cc_name ? 1 : 0)));
 
-  const coveredN = items.filter(i => i.status === "covered").length;
-  const missing = items.filter(i => i.status === "missing");
+  const scored = cp_scoreItems(report, mappings, items);
+  const coveredN = scored.filter(i => i.status === "covered").length;
+  const missing = scored.filter(i => i.status === "missing");
   return {
     target_name: report.target_name || "",
     major_label: report.major || "",
     academic_year: report.academic_year || "",
     published_date: report.published_date || "",
     status: "ok",
-    total_requirements: items.length,
+    total_requirements: scored.length,
     covered: coveredN,
-    coverage_pct: items.length ? Math.round(coveredN / items.length * 100) : 0,
-    items,
+    coverage_pct: scored.length ? Math.round(coveredN / scored.length * 100) : 0,
+    items: scored,
     missing: missing.map(i => ({
       target_code: i.target_code, target_title: i.target_title, options: i.options,
     })),
-    must_take_after_transfer: items
+    must_take_after_transfer: scored
       .filter(i => i.status === "no_articulation")
       .map(i => ({ target_code: i.target_code, target_title: i.target_title })),
     wasted,

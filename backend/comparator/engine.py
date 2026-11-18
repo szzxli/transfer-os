@@ -5,9 +5,11 @@
   covered（已覆盖）/ missing（缺失）/ no_articulation（CC 无对应课，转学后必修）
   / no_agreement（该组合无协议，未知，不判死）。
 
-两所学校时：先把两份报告合并成一份虚拟报告再判定——课程代码必须连同
-学校一起算（同一代码在不同 CC 可能对应不同要求），And 组可以跨两校拆分，
-no_articulation 只有两校都没有时才成立，denied 按来源 CC 各自算。
+两所学校时：第二所课程框为空则不参与比较（结果与单校相同）。有课才合并
+两份报告——课程代码必须连同学校一起算；组编号按报告偏移，组间按“任一组
+满足即覆盖”。覆盖率分母是主校要求，加上第二所已经覆盖的要求；第二所没修到
+的独有要求不进分母（第二所只能加覆盖，不能把百分比拉低）。no_articulation
+只有计入的报告都没有对应课时才成立，denied 按来源 CC 各自算。
 
 数据：data/raw/assist_*.json（batch_fetch.py 抓取，gitignored）。
 判定逻辑：纯规则匹配，不调用 LLM。
@@ -225,6 +227,11 @@ def _merge_reports(reports: list[dict]) -> dict | None:
     return merged
 
 
+def _has_courses(courses: list[str] | None) -> bool:
+    """课程框里至少有一门非空代码。空白行不算。"""
+    return any(_norm_code(c) for c in (courses or []))
+
+
 def compare(cc_name: str, major_query: str, target_names: list[str],
             student_courses: list[str], cc2_name: str | None = None,
             student_courses2: list[str] | None = None) -> dict:
@@ -232,10 +239,13 @@ def compare(cc_name: str, major_query: str, target_names: list[str],
 
     student_courses: 学生已修/计划修的 CC 课程代码列表，如 ["CS A250", "MATH A180"]。
     cc2_name / student_courses2 可选：第二所 CC 及其课程；与主校相同时自动去重为单校。
+    第二所已选但课程框为空：不并入它的协议，结果与只选主校相同（空协议会把
+    第二所独有的要求算进分母，百分比下降）。
     内部按"收 N 份报告"的通用形状写（entries 列表），界面只开放第二所。
     """
     entries = [{"cc_name": cc_name, "courses": student_courses}]
-    if cc2_name and _norm_label(cc2_name) and _norm_label(cc2_name) != _norm_label(cc_name):
+    if (cc2_name and _norm_label(cc2_name) and _norm_label(cc2_name) != _norm_label(cc_name)
+            and _has_courses(student_courses2)):
         entries.append({"cc_name": cc2_name, "courses": student_courses2 or []})
     return _compare_entries(entries, major_query, target_names)
 
@@ -271,6 +281,28 @@ def _compare_entries(entries: list[dict], major_query: str,
         "targets": targets,
         "note": "基于 ASSIST 公开协议数据，仅供参考，以学校官网为准。",
     }
+
+
+def _score_items(report: dict, mappings: list[dict], items: list[dict]) -> list[dict]:
+    """覆盖率只统计主校协议里的要求，外加其它学校已经覆盖上的要求。
+
+    两份协议的要求集合并不相同（实测：SMC 计算机专业在 Davis 是 10 项，
+    De Anza 再并进来变成 19 项，学生在 De Anza 一门都没修时覆盖率从 20%
+    掉到 11%）。没修到的第二所独有要求不进分母、也不进缺失清单——第二所
+    只能把已有要求补上，或在学生真的修到时多算一项已覆盖。
+    """
+    names = report.get("cc_names") or []
+    if len(names) < 2:
+        return items
+    primary = _norm_label(names[0])
+    primary_codes: set[str] = set()
+    for m in mappings:
+        if _norm_label(m.get("source_cc")) != primary:
+            continue
+        if m.get("target_code") and m.get("status") in ("articulated", "no_articulation"):
+            primary_codes.add(m["target_code"])
+    return [i for i in items
+            if i["target_code"] in primary_codes or i["status"] == "covered"]
 
 
 def _compare_one(report: dict, have: dict) -> dict:
@@ -385,6 +417,7 @@ def _compare_one(report: dict, have: dict) -> dict:
                                "note": f"被明确拒绝承认（{denied_codes[key]}）"})
     wasted.sort(key=lambda w: (w["cc_code"], w["cc_name"]))
 
+    items = _score_items(report, mappings, items)
     covered_n = sum(1 for i in items if i["status"] == "covered")
     missing = [i for i in items if i["status"] == "missing"]
     return {
