@@ -12,6 +12,81 @@ function cmp_escape(s) {
     .replace(/"/g, "&quot;");
 }
 
+/* 下拉框的“看起来选中的学校”和 .value 会分叉：选项是脚本填进去的，
+ * 浏览器在刷新时会把上次的标签画在控件上，但 selectedIndex 仍停在第一项
+ * （Antelope Valley College）。用户重新点一次又好了。记住用户选过的值，
+ * 若 .value 掉回第一项，就按记住的学校算、并把它写回控件。 */
+function cmp_resolveCollege(live, chosen, firstOption) {
+  live = live == null ? "" : String(live);
+  chosen = chosen == null ? "" : String(chosen);
+  firstOption = firstOption == null ? "" : String(firstOption);
+  if (chosen && chosen !== live && live === firstOption) return chosen;
+  return live;
+}
+function cmp_applySelect(sel, name) {
+  if (!sel || !sel.options) return "";
+  const want = name == null ? "" : String(name);
+  let idx = -1;
+  for (let i = 0; i < sel.options.length; i++) {
+    const o = sel.options[i];
+    if (o.value === want || o.text === want) { idx = i; break; }
+  }
+  if (!sel.options.length) return "";
+  if (idx < 0) idx = 0;
+  sel.selectedIndex = idx;
+  sel.options[idx].selected = true;
+  return sel.value || "";
+}
+function cmp_noteChoice(sel) {
+  if (!sel) return;
+  sel.dataset.userSet = "1";
+  sel.dataset.chosen = sel.value || "";
+}
+function cmp_syncCollege(sel) {
+  if (!sel || !sel.options || !sel.options.length) return "";
+  const first = sel.options[0].value || "";
+  const chosen = sel.dataset.userSet ? (sel.dataset.chosen || "") : "";
+  const live = sel.value || "";
+  const use = cmp_resolveCollege(live, chosen, first);
+  if (use !== live) cmp_applySelect(sel, use);
+  return sel.value || "";
+}
+function cmp_ccName() {
+  const el = document.getElementById("cc");
+  return el ? cmp_syncCollege(el) : "";
+}
+function cmp_cc2Name() {
+  const el = document.getElementById("cc2");
+  return el ? cmp_syncCollege(el) : "";
+}
+function cmp_persistColleges() {
+  try {
+    const prev = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+    const cc = document.getElementById("cc");
+    const cc2 = document.getElementById("cc2");
+    if (cc && cc.dataset.userSet) prev.cc_name = cc.dataset.chosen || "";
+    if (cc2 && cc2.dataset.userSet) prev.cc2_name = cc2.dataset.chosen || "";
+    const merged = Object.assign({}, CMP_SAVED || {}, prev);
+    localStorage.setItem(LS_KEY, JSON.stringify(merged));
+    CMP_SAVED = merged;
+  } catch (e) { /* 忽略 */ }
+}
+function cmp_reassertColleges() {
+  const cc = document.getElementById("cc");
+  if (!cc || !cc.options || !cc.options.length) return;
+  const before = cc.value || "";
+  cmp_syncCollege(cc);
+  const cc2 = document.getElementById("cc2");
+  if (cc2 && cc2.options && cc2.options.length) cmp_syncCollege(cc2);
+  if ((cc.value || "") !== before) {
+    cmp_renderMajors();
+    cmp_buildCourseIndex();
+    cmp_renderCc2();
+    const step2 = document.getElementById("step2");
+    if (step2 && !step2.hidden) cmp_renderTargets();
+  }
+}
+
 /* 我的规划：命名保存多套方案（localStorage，最多 20 套） */
 const PLANS_KEY = "transferos_cmp_plans";
 function cmp_getPlans() {
@@ -23,8 +98,8 @@ function cmp_setPlans(plans) {
 }
 function cmp_planData() {
   return {
-    cc_name: document.getElementById("cc").value,
-    cc2_name: document.getElementById("cc2").value || "",
+    cc_name: cmp_ccName(),
+    cc2_name: cmp_cc2Name(),
     major_query: document.getElementById("major").value.trim(),
     targets: [...document.querySelectorAll("#targets .chip.on")].map(c => c.dataset.v),
     courses: document.getElementById("courses").value,
@@ -47,7 +122,10 @@ function cmp_loadPlan(id) {
   const d = p.data || {};
   const cc = document.getElementById("cc");
   const cc2 = document.getElementById("cc2");
-  if (d.cc_name) cc.value = d.cc_name;
+  if (d.cc_name) {
+    cmp_applySelect(cc, d.cc_name);
+    if ((cc.value || "") === d.cc_name) cmp_noteChoice(cc);
+  }
   document.getElementById("major").value = d.major_query || "";
   document.getElementById("courses").value = d.courses || "";
   document.getElementById("gpa").value = d.gpa || "";
@@ -57,7 +135,8 @@ function cmp_loadPlan(id) {
   cmp_renderMajors();
   cmp_renderCc2();
   if (d.cc2_name && cc2) {
-    cc2.value = d.cc2_name;
+    cmp_applySelect(cc2, d.cc2_name);
+    if ((cc2.value || "") === d.cc2_name) cmp_noteChoice(cc2);
     cmp_renderCc2();
   }
   if (d.courses2) document.getElementById("courses2").value = d.courses2;
@@ -131,6 +210,27 @@ function cmp_renderPlans() {
 /* ---------- 新手引导巡游：coach-mark，一步步带点 ---------- */
 const TOUR_KEY = "transferos_tour_done";
 let TOUR_IDX = -1;
+let TOUR_GENERATION = 0;
+let TOUR_AUTO_TIMER = 0;
+let TOUR_SHOW_TIMER = 0;
+let TOUR_MANUAL = false;
+function tour_cancelTimers() {
+  if (TOUR_AUTO_TIMER) { clearTimeout(TOUR_AUTO_TIMER); TOUR_AUTO_TIMER = 0; }
+  if (TOUR_SHOW_TIMER) { clearTimeout(TOUR_SHOW_TIMER); TOUR_SHOW_TIMER = 0; }
+}
+function tour_markDone() {
+  try { localStorage.setItem(TOUR_KEY, "1"); } catch (e) { /* 忽略 */ }
+  try { sessionStorage.setItem(TOUR_KEY, "1"); } catch (e) { /* 忽略 */ }
+}
+function tour_isDone() {
+  try { if (localStorage.getItem(TOUR_KEY) === "1") return true; } catch (e) { /* 忽略 */ }
+  try { if (sessionStorage.getItem(TOUR_KEY) === "1") return true; } catch (e) { /* 忽略 */ }
+  return false;
+}
+/* 自动巡游只在「还没看过、也没存过专业」时安排一次。手动回放不走这里。 */
+function tour_shouldAutoShow(done, savedMajor) {
+  return !done && !savedMajor;
+}
 function tour_steps() {
   return [
     { sel: "#cc", tk: "tour1_t", bk: "tour1_b" },
@@ -142,7 +242,14 @@ function tour_steps() {
     { center: true, tk: "tour7_t", bk: "tour7_b" },
   ];
 }
-function tour_start() {
+function tour_start(opts) {
+  const manual = !!(opts && opts.manual);
+  const armed = !!(opts && opts.armed);
+  /* 裸调用不再自动开。回放按钮传 manual；首访定时器传 armed。
+   * 跳过/完成后 generation 会变，过期的 armed 定时器进不来。 */
+  if (!manual && !armed) return;
+  if (manual) TOUR_MANUAL = true;
+  if (!manual && tour_isDone() && !armed) return;
   if (document.getElementById("tourOverlay")) return;
   const ov = document.createElement("div");
   ov.id = "tourOverlay";
@@ -162,6 +269,7 @@ function tour_start() {
   document.getElementById("tourPrev").onclick = () => tour_show(TOUR_IDX - 1);
   document.getElementById("tourNext").onclick = () => tour_show(TOUR_IDX + 1);
   document.getElementById("tourSkip").onclick = tour_end;
+  document.getElementById("tourSkip").addEventListener("pointerdown", tour_markDone);
   tour_show(0);
 }
 function tour_show(i) {
@@ -169,6 +277,7 @@ function tour_show(i) {
   if (i >= steps.length) { tour_end(); return; }
   if (i < 0) i = 0;
   TOUR_IDX = i;
+  tour_markDone();
   const st = steps[i];
   if (st.before) { try { st.before(); } catch (e) { /* 忽略 */ } }
   document.getElementById("tourTitle").textContent = t(st.tk);
@@ -194,8 +303,12 @@ function tour_show(i) {
   if (!el) { tour_show(i + 1); return; }
   ov.style.display = "none";
   try { el.scrollIntoView({ block: "center" }); } catch (e) { /* 忽略 */ }
-  setTimeout(() => {
-    if (TOUR_IDX !== i) return;
+  if (TOUR_SHOW_TIMER) { clearTimeout(TOUR_SHOW_TIMER); TOUR_SHOW_TIMER = 0; }
+  const gen = TOUR_GENERATION;
+  TOUR_SHOW_TIMER = setTimeout(() => {
+    TOUR_SHOW_TIMER = 0;
+    if (gen !== TOUR_GENERATION) return;
+    if (!ov.isConnected || TOUR_IDX !== i) return;
     const r = el.getBoundingClientRect();
     hole.style.display = "block";
     hole.style.top = Math.max(4, r.top - 8) + "px";
@@ -213,9 +326,12 @@ function tour_show(i) {
   }, 450);
 }
 function tour_end() {
+  TOUR_GENERATION++;
+  tour_cancelTimers();
+  TOUR_MANUAL = false;
+  tour_markDone();
   const ov = document.getElementById("tourOverlay");
   if (ov) ov.remove();
-  try { localStorage.setItem(TOUR_KEY, "1"); } catch (e) { /* 忽略 */ }
   TOUR_IDX = -1;
 }
 
@@ -223,15 +339,25 @@ function cmp_init() {
   initLang();
   CMP_OPTS = cp_listOptions();
   const cc = document.getElementById("cc");
+  cc.autocomplete = "off";
   cc.innerHTML = CMP_OPTS.ccs.map(c => `<option>${cmp_escape(c)}</option>`).join("");
   cc.onchange = function () {
+    cmp_noteChoice(cc);
+    cmp_persistColleges();
     cmp_renderMajors();
     cmp_buildCourseIndex();
     cmp_renderCc2();
     if (!document.getElementById("step2").hidden) cmp_renderTargets();
   };
   const cc2 = document.getElementById("cc2");
-  if (cc2) cc2.onchange = cmp_onCc2Change;
+  if (cc2) {
+    cc2.autocomplete = "off";
+    cc2.onchange = function () {
+      cmp_noteChoice(cc2);
+      cmp_persistColleges();
+      cmp_onCc2Change();
+    };
+  }
   try {
     CMP_SAVED = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
   } catch (e) { CMP_SAVED = {}; }
@@ -248,14 +374,18 @@ function cmp_init() {
       if (Array.isArray(ho.targets) && ho.targets.length) CMP_SAVED.targets = ho.targets;
     }
   } catch (e) { /* 忽略 */ }
-  if (CMP_SAVED.cc_name) cc.value = CMP_SAVED.cc_name;
+  if (CMP_SAVED.cc_name) {
+    cmp_applySelect(cc, CMP_SAVED.cc_name);
+    if ((cc.value || "") === CMP_SAVED.cc_name) cmp_noteChoice(cc);
+  }
   if (CMP_SAVED.major_query) document.getElementById("major").value = CMP_SAVED.major_query;
   if (CMP_SAVED.courses) document.getElementById("courses").value = CMP_SAVED.courses;
   if (CMP_SAVED.gpa) document.getElementById("gpa").value = CMP_SAVED.gpa;
   cmp_renderMajors();
   cmp_renderCc2();
   if (CMP_SAVED.cc2_name && cc2) {
-    cc2.value = CMP_SAVED.cc2_name;
+    cmp_applySelect(cc2, CMP_SAVED.cc2_name);
+    if ((cc2.value || "") === CMP_SAVED.cc2_name) cmp_noteChoice(cc2);
     cmp_renderCc2();
   }
   if (CMP_SAVED.courses2) document.getElementById("courses2").value = CMP_SAVED.courses2;
@@ -266,15 +396,38 @@ function cmp_init() {
   applyI18n();
   cmp_countCourses();
   cmp_placeholder();
-  /* 7 步引导只在这台设备第一次打开对比页时自动出现。一开始就记下，
-   * 刷新或没点跳过也不会再挡操作；底部「新手引导」按钮仍可手动重看。
-   * 已经存过专业的回访用户也不再自动弹出。 */
+  cmp_reassertColleges();
+  requestAnimationFrame(cmp_reassertColleges);
+  setTimeout(cmp_reassertColleges, 0);
+  setTimeout(cmp_reassertColleges, 250);
+  /* 7 步引导只自动出现一次。卡片真正画出来、或用户跳过/完成，都记成已看过。
+   * 定时器带着 generation：跳过、完成、或从往返缓存回来都会作废，
+   * 不会过几百毫秒又弹出第 1 步。回放按钮仍可手动打开。 */
   try {
-    if (!localStorage.getItem(TOUR_KEY) && !(CMP_SAVED && CMP_SAVED.major_query)) {
-      try { localStorage.setItem(TOUR_KEY, "1"); } catch (e2) { /* 存不下就只这一次 */ }
-      setTimeout(tour_start, 900);
+    if (tour_shouldAutoShow(tour_isDone(), CMP_SAVED && CMP_SAVED.major_query)) {
+      const gen = TOUR_GENERATION;
+      TOUR_AUTO_TIMER = setTimeout(function () {
+        TOUR_AUTO_TIMER = 0;
+        if (gen !== TOUR_GENERATION) return;
+        if (!tour_shouldAutoShow(tour_isDone(), CMP_SAVED && CMP_SAVED.major_query)) return;
+        tour_start({ armed: true });
+      }, 900);
     }
   } catch (e) { /* 忽略 */ }
+  if (!window.__cmpPageShow) {
+    window.__cmpPageShow = true;
+    window.addEventListener("pageshow", function (ev) {
+      try { cmp_reassertColleges(); } catch (e) { /* 忽略 */ }
+      if (!ev.persisted) return;
+      TOUR_GENERATION++;
+      tour_cancelTimers();
+      if (tour_isDone() && !TOUR_MANUAL) {
+        const ov = document.getElementById("tourOverlay");
+        if (ov) ov.remove();
+        TOUR_IDX = -1;
+      }
+    });
+  }
   /* 首页断点恢复 / Demo 一键直达：带 autorun 参数自动跑一次对比 */
   try {
     if (new URLSearchParams(location.search).get("autorun") === "1"
@@ -288,6 +441,8 @@ function cmp_init() {
 function cmp_showStep(n) {
   document.getElementById("step1").hidden = n !== 1;
   document.getElementById("step2").hidden = n !== 2;
+  /* 学校下拉在 hidden 的步骤里被浏览器改回第一项时，重新露出来之前先对齐。 */
+  if (n === 1) cmp_reassertColleges();
   if (n === 2) {
     cmp_renderTargets();
     if (Array.isArray(CMP_SAVED.targets)) {
@@ -314,7 +469,7 @@ let CMP_SUGG_LIST = [];
 let CMP_SUGG_IDX = -1;
 
 function cmp_renderMajors() {
-  const cc = document.getElementById("cc").value;
+  const cc = cmp_ccName();
   const set = new Set();
   const byTgt = (CMP_OPTS.by_cc[cc]) || {};
   Object.keys(byTgt).forEach(tg => (byTgt[tg] || []).forEach(m => set.add(m)));
@@ -324,13 +479,16 @@ function cmp_renderMajors() {
 /* 第二所社区学院下拉：选项 = 全部 CC 减去主校（主校与第二所不能选同一所）；
  * 主校改成与第二所相同时，第二所自动清空；有第二所时显示第二课程框。 */
 function cmp_renderCc2() {
-  const cc = document.getElementById("cc").value;
+  const ccEl = document.getElementById("cc");
+  const cc = ccEl ? cmp_syncCollege(ccEl) : "";
   const sel = document.getElementById("cc2");
   if (!sel) return;
-  const prev = sel.value;
+  const remembered = sel.dataset.userSet ? (sel.dataset.chosen || "") : (sel.value || "");
   sel.innerHTML = `<option value="">${cmp_escape(t("f_cc2_none"))}</option>`
     + CMP_OPTS.ccs.filter(c => c !== cc).map(c => `<option>${cmp_escape(c)}</option>`).join("");
-  sel.value = (prev && prev !== cc) ? prev : "";
+  const keep = remembered && remembered !== cc ? remembered : "";
+  cmp_applySelect(sel, keep);
+  if (sel.dataset.userSet) sel.dataset.chosen = sel.value || "";
   const has2 = !!sel.value;
   const wrap = document.getElementById("courses2Wrap");
   if (wrap) wrap.hidden = !has2;
@@ -343,7 +501,9 @@ function cmp_renderCc2() {
 function cmp_removeCc2() {
   const sel = document.getElementById("cc2");
   if (!sel) return;
-  sel.value = "";
+  cmp_applySelect(sel, "");
+  cmp_noteChoice(sel);
+  cmp_persistColleges();
   cmp_onCc2Change();
 }
 function cmp_onCc2Change() {
@@ -359,9 +519,7 @@ function cmp_setCourseBox(box) {
   CMP_COURSE_BOX = box;
   const inp = document.getElementById("courseSearch");
   if (inp) {
-    const ccName = box === "courses2"
-      ? (document.getElementById("cc2") || {}).value
-      : document.getElementById("cc").value;
+    const ccName = box === "courses2" ? cmp_cc2Name() : cmp_ccName();
     inp.placeholder = ccName ? `${t("ph_find_course")} (${ccName})` : t("ph_find_course");
   }
 }
@@ -436,11 +594,11 @@ function cmp_buildIndexFor(cc) {
   return idx;
 }
 function cmp_buildCourseIndex() {
-  CMP_COURSES = cmp_buildIndexFor(document.getElementById("cc").value);
+  CMP_COURSES = cmp_buildIndexFor(cmp_ccName());
 }
 function cmp_buildCourseIndex2() {
-  const cc2 = document.getElementById("cc2");
-  CMP_COURSES2 = (cc2 && cc2.value) ? cmp_buildIndexFor(cc2.value) : [];
+  const name = cmp_cc2Name();
+  CMP_COURSES2 = name ? cmp_buildIndexFor(name) : [];
 }
 /* 当前课程搜索用哪个学校的索引：跟随最后聚焦的课程框 */
 function cmp_activeCourseIndex() {
@@ -520,9 +678,8 @@ function cmp_placeholder() {
 }
 
 function cmp_renderTargets() {
-  const cc = document.getElementById("cc").value;
-  const cc2El = document.getElementById("cc2");
-  const cc2 = cc2El ? cc2El.value : "";
+  const cc = cmp_ccName();
+  const cc2 = cmp_cc2Name();
   const box = document.getElementById("targets");
   /* 目标校取两所 CC 的并集：只在第二所报告里有的目标也能比 */
   const tgts = Object.keys((CMP_OPTS.by_cc[cc]) || {});
@@ -535,8 +692,8 @@ function cmp_renderTargets() {
 function cmp_run() {
   const box = document.getElementById("result");
   const btn = document.getElementById("go");
-  const ccName = document.getElementById("cc").value;
-  const cc2Name = document.getElementById("cc2").value || "";
+  const ccName = cmp_ccName();
+  const cc2Name = cmp_cc2Name();
   const majorQuery = document.getElementById("major").value.trim() || "computer science";
   const targets = [...document.querySelectorAll("#targets .chip.on")].map(c => c.dataset.v);
   const courses = document.getElementById("courses").value
@@ -1060,8 +1217,8 @@ function cmp_whatifCard() {
 function cmp_whatifToggle(el) {
   const key = el.dataset.wi;
   if (el.checked) _cmpExcluded.add(key); else _cmpExcluded.delete(key);
-  const ccName = document.getElementById("cc").value;
-  const cc2Name = document.getElementById("cc2").value || "";
+  const ccName = cmp_ccName();
+  const cc2Name = cmp_cc2Name();
   const majorQuery = document.getElementById("major").value.trim() || "computer science";
   const targets = [...document.querySelectorAll("#targets .chip.on")].map(c => c.dataset.v);
   const keep = (x) => !_cmpExcluded.has(x.cc + "|" + x.code.replace(/ /g, ""));

@@ -30,10 +30,10 @@
   <div class="card" id="step1">
     <div class="step-tag"><span class="step-n">1</span><span data-i18n="step1_title"></span></div>
     <label class="f" for="cc" data-i18n="f_cc"></label>
-    <select id="cc"></select>
+    <select id="cc" autocomplete="off"></select>
 
     <label class="f" for="cc2" data-i18n="f_cc2"></label>
-    <select id="cc2"></select>
+    <select id="cc2" autocomplete="off"></select>
     <div class="hint" data-i18n="f_cc2_hint"></div>
     <button class="btn ghost sm" id="cc2Remove" hidden onclick="cmp_removeCc2()" data-i18n="cc2_remove" style="width:100%;margin-top:8px"></button>
 
@@ -46,7 +46,7 @@
     <div class="hint" data-i18n="f_major2_hint"></div>
 
     <button class="btn" id="toStep2" onclick="cmp_toStep2()" data-i18n="btn_next"></button>
-    <button class="btn ghost sm" style="width:100%;margin-top:8px" onclick="tour_start()" data-i18n="tour_replay"></button>
+    <button type="button" class="btn ghost sm" style="width:100%;margin-top:8px" onclick="tour_start({manual:true})" data-i18n="tour_replay"></button>
   </div>
 
   <div class="card" id="step2" hidden>
@@ -128,7 +128,7 @@
 <script src="js/i18n.js?v=34"></script>
 <script src="js/comparator.js?v=34"></script>
 <script src="js/admit.js?v=32"></script>
-<script src="js/app-compare.js?v=34"></script>
+<script src="js/app-compare.js?v=35"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
