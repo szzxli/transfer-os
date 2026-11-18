@@ -1,9 +1,13 @@
 """Articulation 对比器引擎（P1b）。
 
-输入：一所 CC、一个专业查询词、多所目标 UC、学生已修/计划修课程列表。
+输入：一所 CC（可选第二所）、一个专业查询词、多所目标 UC、学生已修/计划修课程列表。
 输出：统一矩阵——每所目标校的专业先修要求逐项标注
   covered（已覆盖）/ missing（缺失）/ no_articulation（CC 无对应课，转学后必修）
   / no_agreement（该组合无协议，未知，不判死）。
+
+两所学校时：先把两份报告合并成一份虚拟报告再判定——课程代码必须连同
+学校一起算（同一代码在不同 CC 可能对应不同要求），And 组可以跨两校拆分，
+no_articulation 只有两校都没有时才成立，denied 按来源 CC 各自算。
 
 数据：data/raw/assist_*.json（batch_fetch.py 抓取，gitignored）。
 判定逻辑：纯规则匹配，不调用 LLM。
@@ -20,6 +24,36 @@ def _norm_code(code: str | None) -> str:
     if not code:
         return ""
     return re.sub(r"\s+", " ", code.strip().upper())
+
+
+def _make_have(entries: list[dict]) -> dict:
+    """带归属的已修课集合：课程代码在各校之间全面重叠，同一代码必须连同
+    学校一起判定——只在"列出它的那份 CC 协议"里才算数。
+    返回 {"pairs": {(cc_label, flat_code)}, "per_cc": [{cc_name, courses}]}。"""
+    pairs: set[tuple[str, str]] = set()
+    per_cc: list[dict] = []
+    for e in (entries or []):
+        cc_l = _norm_label(e.get("cc_name"))
+        if not cc_l:
+            continue
+        codes: list[str] = []
+        for c in (e.get("courses") or []):
+            n = _norm_code(c)
+            if not n:
+                continue
+            pairs.add((cc_l, n.replace(" ", "")))
+            if n not in codes:
+                codes.append(n)
+        per_cc.append({"cc_name": e.get("cc_name"), "courses": sorted(codes)})
+    return {"pairs": pairs, "per_cc": per_cc}
+
+
+def _has(have: dict, cc_name: str, code: str) -> bool:
+    """学生是否在 cc_name 这所学校修过 code（去空格形态比对）。"""
+    f = _norm_code(code).replace(" ", "")
+    if not f:
+        return False
+    return (_norm_label(cc_name), f) in have["pairs"]
 
 
 def _norm_label(text: str | None) -> str:
@@ -154,22 +188,71 @@ def _group_articulated(mappings: list[dict]) -> dict[str, list[dict]]:
             "cc_code": _norm_code(m.get("cc_code")),
             "cc_title": m.get("cc_title", ""),
             "target_title": m.get("target_title", ""),
+            "source_cc": m.get("source_cc", ""),
         })
     return groups
 
 
+def _merge_reports(reports: list[dict]) -> dict | None:
+    """把多所 CC 的报告合并成一份虚拟报告：mappings 打上来源 CC 标签。
+    同一目标课程在 A 校无对应课、在 B 校有——只有两校都没有时才算
+    no_articulation。组编号只在单份报告内有意义：两份报告的 group_0 是
+    各自独立的备选方案，不是同一 And 组的一半；直接拼接会把它们并成
+    一个 And 组，导致单校已覆盖的要求在加了第二所后反而变缺失（实测：
+    SMC MATH 7 覆盖 MATH 31A，加空 De Anza 后变 missing）。所以每份
+    报告的组编号按报告序号偏移（+1000），合并后各组仍是独立备选；跨校
+    的真正收益在要求项层面（不同目标要求分别由两校覆盖），不在组内。"""
+    if not reports:
+        return None
+    years = sorted((r.get("academic_year") or "" for r in reports if r.get("academic_year")), reverse=True)
+    pubs = sorted((r.get("published_date") or "" for r in reports if r.get("published_date")), reverse=True)
+    merged: dict = {
+        "cc_name": reports[0].get("cc_name", ""),
+        "cc_names": [r.get("cc_name", "") for r in reports],
+        "target_name": reports[0].get("target_name", ""),
+        "major": reports[0].get("major", ""),
+        "academic_year": years[0] if years else "",
+        "published_date": pubs[0] if pubs else "",
+        "mappings": [],
+    }
+    for i, r in enumerate(reports):
+        off = i * 1000  # 组编号按报告偏移，避免跨报告同号组合并
+        for m in (r.get("mappings") or []):
+            sec = str(m.get("section") or "")
+            sec = re.sub(r"group_(\d+)\(", lambda mm: f"group_{int(mm.group(1)) + off}(", sec)
+            sec = re.sub(r"(\d+)-(\d+):", lambda mm: f"{int(mm.group(1)) + off}-{int(mm.group(2)) + off}:", sec)
+            merged["mappings"].append({**m, "source_cc": r.get("cc_name", ""), "section": sec})
+    return merged
+
+
 def compare(cc_name: str, major_query: str, target_names: list[str],
-            student_courses: list[str]) -> dict:
+            student_courses: list[str], cc2_name: str | None = None,
+            student_courses2: list[str] | None = None) -> dict:
     """生成多校对比矩阵。
 
     student_courses: 学生已修/计划修的 CC 课程代码列表，如 ["CS A250", "MATH A180"]。
+    cc2_name / student_courses2 可选：第二所 CC 及其课程；与主校相同时自动去重为单校。
+    内部按"收 N 份报告"的通用形状写（entries 列表），界面只开放第二所。
     """
+    entries = [{"cc_name": cc_name, "courses": student_courses}]
+    if cc2_name and _norm_label(cc2_name) and _norm_label(cc2_name) != _norm_label(cc_name):
+        entries.append({"cc_name": cc2_name, "courses": student_courses2 or []})
+    return _compare_entries(entries, major_query, target_names)
+
+
+def _compare_entries(entries: list[dict], major_query: str,
+                     target_names: list[str]) -> dict:
     reports = load_reports()
-    have = {_norm_code(c) for c in student_courses if _norm_code(c)}
+    have = _make_have(entries)
+    cc_names = [e["cc_name"] for e in entries if e.get("cc_name")]
     targets = []
     for target in target_names:
-        report = _find_report(reports, cc_name, target, major_query)
-        if report is None:
+        found = []
+        for e in entries:
+            r = _find_report(reports, e["cc_name"], target, major_query)
+            if r is not None:
+                found.append(r)
+        if not found:
             # 无协议：未知，不判死
             targets.append({
                 "target_name": target,
@@ -177,26 +260,34 @@ def compare(cc_name: str, major_query: str, target_names: list[str],
                 "note": "未找到该组合的 articulation 协议（可能无协议或未抓取），请查 ASSIST 官网。",
             })
             continue
-        t = _compare_one(report, have)
-        targets.append(t)
+        targets.append(_compare_one(_merge_reports(found), have))
+    all_courses = sorted({c for e in have["per_cc"] for c in e["courses"]})
     return {
-        "cc_name": cc_name,
+        "cc_name": cc_names[0] if cc_names else "",
+        "cc_names": cc_names,
         "major_query": major_query,
-        "student_courses": sorted(have),
+        "student_courses": all_courses,
+        "student_courses_by_cc": have["per_cc"],
         "targets": targets,
         "note": "基于 ASSIST 公开协议数据，仅供参考，以学校官网为准。",
     }
 
 
-def _compare_one(report: dict, have: set[str]) -> dict:
+def _compare_one(report: dict, have: dict) -> dict:
     mappings = report.get("mappings", []) or []
+    # 直接调用时映射行可能没有 source_cc 标签（单校旧路径）：默认取报告本身的 CC。
+    for m in mappings:
+        if not m.get("source_cc"):
+            m["source_cc"] = report.get("cc_name", "")
     articulated = _group_articulated(mappings)
 
-    # denied：明确拒绝的 CC 课程（学生修了=白修）
-    denied_codes: dict[str, str] = {}
+    # denied：明确拒绝的 CC 课程（学生修了=白修），按来源 CC 各自算
+    denied_codes: dict[tuple[str, str], str] = {}
     for m in mappings:
         if m.get("status") == "denied" and m.get("cc_code"):
-            denied_codes[_norm_code(m["cc_code"])] = m.get("target_title", "")
+            key = (_norm_label(m.get("source_cc") or report.get("cc_name") or ""),
+                   _norm_code(m["cc_code"]).replace(" ", ""))
+            denied_codes[key] = m.get("target_title", "")
 
     items = []
     # 1) 有 articulation 的目标课程要求
@@ -206,30 +297,62 @@ def _compare_one(report: dict, have: set[str]) -> dict:
         by_group: dict[int, dict] = {}
         for r in rows:
             by_group.setdefault(r["group"], {"conj": r["conj"], "codes": []})
-            by_group[r["group"]]["codes"].append(r["cc_code"])
+            by_group[r["group"]]["codes"].append(
+                {"code": r["cc_code"], "cc": r.get("source_cc", "")})
         satisfied_via: list[str] = []
+        satisfied_detail: list[dict] = []
         covered = False
         options: list[str] = []
+        options_detail: list[dict] = []
         for gi, g in sorted(by_group.items()):
-            codes = [c for c in g["codes"] if c]
+            # 同一代码可能来自两所 CC 的报告：按 (代码, 来源 CC) 去重，
+            # 判定只看学生在"列出该代码的那所 CC"修过它。
+            seen_pair: set[tuple[str, str]] = set()
+            pairs: list[dict] = []
+            for p in g["codes"]:
+                if not p["code"]:
+                    continue
+                k = (_norm_code(p["code"]).replace(" ", ""), _norm_label(p["cc"]))
+                if k in seen_pair:
+                    continue
+                seen_pair.add(k)
+                pairs.append(p)
+            codes = sorted({p["code"] for p in pairs})
+            if not codes:
+                continue
             options.extend(codes)
+            for p in pairs:
+                if not any(o["code"] == p["code"] and o["cc"] == p["cc"]
+                           for o in options_detail):
+                    options_detail.append({"code": p["code"], "cc": p["cc"]})
+            # 每门代码的命中 = 学生在该代码的来源 CC 修过它
+            hits = [p for p in pairs if _has(have, p["cc"], p["code"])]
             if g["conj"].lower() == "or":
-                hit = [c for c in codes if c in have]
-                if hit:
+                if hits:
                     covered = True
-                    satisfied_via.extend(hit)
-            else:  # And：组内课程要全修
-                if codes and all(c in have for c in codes):
+                    satisfied_via.extend(h["code"] for h in hits)
+                    satisfied_detail.extend({"code": h["code"], "cc": h["cc"]} for h in hits)
+            else:  # And：组内每门代码都要在来源 CC 修过
+                hit_codes = {_norm_code(h["code"]).replace(" ", "") for h in hits}
+                if codes and all(_norm_code(c).replace(" ", "") in hit_codes for c in codes):
                     covered = True
-                    satisfied_via.extend(codes)
+                    satisfied_via.extend(h["code"] for h in hits)
+                    satisfied_detail.extend({"code": h["code"], "cc": h["cc"]} for h in hits)
         # 注：组间连接词（groupConjunctions）绝大多数是 Or；此处按"任一组满足即覆盖"
         # 处理，And-between-groups 的罕见情况在 detail 里提示人工核对。
+        via_detail: list[dict] = []
+        for v in satisfied_detail:
+            if not any(x["code"] == v["code"] and x["cc"] == v["cc"] for x in via_detail):
+                via_detail.append(v)
         items.append({
             "target_code": tcode,
             "target_title": title,
             "status": "covered" if covered else "missing",
             "via": sorted(set(satisfied_via)),
+            "via_detail": via_detail,
             "options": sorted(set(options)),
+            "options_detail": sorted(options_detail,
+                                     key=lambda o: (o["code"], o["cc"])),
             "detail": ("已覆盖" if covered
                        else f"缺失：需修 {', '.join(sorted(set(options)))}"),
         })
@@ -251,9 +374,16 @@ def _compare_one(report: dict, have: set[str]) -> dict:
                 "detail": "该 CC 无对应课程，需转学后在目标校修读。",
             })
 
-    # 3) 白修预警：学生课程命中 denied 列表
-    wasted = [{"cc_code": c, "note": f"被明确拒绝承认（{denied_codes[c]}）"}
-              for c in sorted(have & set(denied_codes))]
+    # 3) 白修预警：学生课程命中 denied 列表（按来源 CC 各自算——
+    # 在 A 校被拒的课，在 B 校修的不算白修；同一代码两校都修过，只标被拒的那一所）
+    wasted = []
+    for e in have["per_cc"]:
+        for c in e["courses"]:
+            key = (_norm_label(e["cc_name"]), c.replace(" ", ""))
+            if key in denied_codes:
+                wasted.append({"cc_code": c, "cc_name": e["cc_name"],
+                               "note": f"被明确拒绝承认（{denied_codes[key]}）"})
+    wasted.sort(key=lambda w: (w["cc_code"], w["cc_name"]))
 
     covered_n = sum(1 for i in items if i["status"] == "covered")
     missing = [i for i in items if i["status"] == "missing"]
