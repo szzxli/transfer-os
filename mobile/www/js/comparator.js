@@ -12,19 +12,32 @@ function cp_normCode(code) {
 /* 无空格形态：ACCT1A <-> ACCT 1A 互认 */
 function cp_flat(code) { return cp_normCode(code).replace(/ /g, ""); }
 
-/* 双向容错：ACCT1A <-> ACCT 1A 任一方向都能命中 */
-function cp_has(have, code) {
-  return have.has(code) || have.has(code.replace(/ /g, ""));
-}
-/* have 集合同时收录带空格/无空格两种形态，显示仍用原码 */
-function cp_makeHave(courses) {
-  const s = new Set();
-  for (const c of (courses || [])) {
-    const n = cp_normCode(c);
-    if (!n) continue;
-    s.add(n); s.add(n.replace(/ /g, ""));
+/* 带归属的已修课集合：课程代码在各校之间全面重叠（如 MATH 1A 几乎每所都有），
+ * 同一代码必须连同学校一起判定——只在"列出它的那份 CC 协议"里才算数。
+ * have = { pairs: Set<"ccLabel|flatCode">, perCc: [{cc_name, courses:[规范码]}] }。
+ * 双向容错保留：ACCT1A <-> ACCT 1A 任一方向都能命中（flat 形态比对）。 */
+function cp_makeHave(entries) {
+  const pairs = new Set();
+  const perCc = [];
+  for (const e of (entries || [])) {
+    const ccL = cp_normLabel(e.cc_name);
+    if (!ccL) continue;
+    const codes = [];
+    for (const c of (e.courses || [])) {
+      const n = cp_normCode(c);
+      if (!n) continue;
+      pairs.add(ccL + "|" + n.replace(/ /g, ""));
+      if (!codes.includes(n)) codes.push(n);
+    }
+    perCc.push({ cc_name: e.cc_name, courses: codes.sort() });
   }
-  return s;
+  return { pairs, perCc };
+}
+/* 学生是否在 ccName 这所学校修过 code（flat 形态比对，空格容错）。 */
+function cp_has(have, ccName, code) {
+  const f = cp_normCode(code).replace(/ /g, "");
+  if (!f) return false;
+  return have.pairs.has(cp_normLabel(ccName) + "|" + f);
 }
 
 function cp_normLabel(text) {
@@ -147,18 +160,67 @@ function cp_groupArticulated(mappings) {
       cc_code: cp_normCode(m.cc_code),
       cc_title: m.cc_title || "",
       target_title: m.target_title || "",
+      source_cc: m.source_cc || "",
     });
   }
   return groups;
 }
 
-function cp_compare(ccName, majorQuery, targetNames, studentCourses) {
+/* 把多所 CC 的报告合并成一份虚拟报告：mappings 打上来源 CC 标签，再按组判定。
+ * 同一目标课程在 A 校无对应课、在 B 校有——只有两校都没有时才算 no_articulation；
+ * And 组可以跨两校拆分（A 校修一半、B 校修一半也算覆盖）。 */
+/* 合并多份报告为一份虚拟报告：映射行原样拼接并打上 source_cc。
+ * 关键：组编号只在单份报告内有意义——两份报告的 group_0 是各自独立的
+ * 备选方案（不是同一 And 组的一半）。直接拼接会把它们并成一个 And 组，
+ * 导致单校已覆盖的要求在加了第二所后反而变缺失（实测：SMC MATH 7 覆盖
+ * MATH 31A，加空 De Anza 后变 missing）。所以每份报告的组编号按报告
+ * 序号偏移（+1000），合并后各组仍是独立备选；跨校的真正收益在要求项
+ * 层面（不同目标要求分别由两校覆盖），不在组内。 */
+function cp_mergeReports(reports) {
+  if (!reports.length) return null;
+  const merged = {
+    cc_name: reports[0].cc_name || "",
+    cc_names: reports.map(r => r.cc_name || ""),
+    target_name: reports[0].target_name || "",
+    major: reports[0].major || "",
+    academic_year: reports.map(r => r.academic_year || "").filter(Boolean).sort().reverse()[0] || "",
+    published_date: reports.map(r => r.published_date || "").filter(Boolean).sort().reverse()[0] || "",
+    mappings: [],
+  };
+  for (let i = 0; i < reports.length; i++) {
+    const r = reports[i];
+    const off = i * 1000; /* 组编号按报告偏移，避免跨报告同号组合并 */
+    for (const m of (r.mappings || [])) {
+      const sec = String(m.section || "")
+        .replace(/group_(\d+)\(/g, (_, n) => `group_${parseInt(n, 10) + off}(`)
+        .replace(/(\d+)-(\d+):/g, (_, a, b) => `${parseInt(a, 10) + off}-${parseInt(b, 10) + off}:`);
+      merged.mappings.push(Object.assign({}, m, { source_cc: r.cc_name || "", section: sec }));
+    }
+  }
+  return merged;
+}
+
+/* 对比入口：cc2Name / studentCourses2 可选；第二所与主校相同时自动去重为单校。
+ * 内部按"收 N 份报告"的通用形状写（entries 数组），界面只开放第二所。 */
+function cp_compare(ccName, majorQuery, targetNames, studentCourses, cc2Name, studentCourses2) {
+  const entries = [{ cc_name: ccName, courses: studentCourses }];
+  if (cc2Name && cp_normLabel(cc2Name) && cp_normLabel(cc2Name) !== cp_normLabel(ccName))
+    entries.push({ cc_name: cc2Name, courses: studentCourses2 });
+  return cp_compareEntries(entries, majorQuery, targetNames);
+}
+
+function cp_compareEntries(entries, majorQuery, targetNames) {
   const reports = cp_loadReports();
-  const have = cp_makeHave(studentCourses);
+  const have = cp_makeHave(entries);
+  const ccNames = entries.map(e => e.cc_name).filter(Boolean);
   const targets = [];
   for (const target of targetNames) {
-    const report = cp_findReport(reports, ccName, target, majorQuery);
-    if (!report) {
+    const found = [];
+    for (const e of entries) {
+      const r = cp_findReport(reports, e.cc_name, target, majorQuery);
+      if (r) found.push(r);
+    }
+    if (!found.length) {
       targets.push({
         target_name: target,
         status: "no_agreement",
@@ -166,12 +228,15 @@ function cp_compare(ccName, majorQuery, targetNames, studentCourses) {
       });
       continue;
     }
-    targets.push(cp_compareOne(report, have));
+    targets.push(cp_compareOne(cp_mergeReports(found), have));
   }
+  const allCourses = [...new Set(have.perCc.flatMap(e => e.courses))].sort();
   return {
-    cc_name: ccName,
+    cc_name: ccNames[0] || "",
+    cc_names: ccNames,
     major_query: majorQuery,
-    student_courses: [...have].sort(),
+    student_courses: allCourses,
+    student_courses_by_cc: have.perCc,
     targets,
     note: t("d_main_note"),
   };
@@ -179,12 +244,18 @@ function cp_compare(ccName, majorQuery, targetNames, studentCourses) {
 
 function cp_compareOne(report, have) {
   const mappings = report.mappings || [];
+  /* 直接调用时映射行可能没有 source_cc 标签（单校旧路径）：默认取报告本身的 CC。 */
+  for (const m of mappings) {
+    if (!m.source_cc) m.source_cc = report.cc_name || "";
+  }
   const articulated = cp_groupArticulated(mappings);
 
   const deniedCodes = {};
   for (const m of mappings) {
-    if (m.status === "denied" && m.cc_code)
-      deniedCodes[cp_normCode(m.cc_code)] = m.target_title || "";
+    if (m.status === "denied" && m.cc_code) {
+      const key = cp_normLabel(m.source_cc || report.cc_name || "") + "|" + cp_normCode(m.cc_code).replace(/ /g, "");
+      deniedCodes[key] = m.target_title || "";
+    }
   }
 
   const items = [];
@@ -195,27 +266,56 @@ function cp_compareOne(report, have) {
     const byGroup = {};
     for (const r of rows) {
       if (!byGroup[r.group]) byGroup[r.group] = { conj: r.conj, codes: [] };
-      byGroup[r.group].codes.push(r.cc_code);
+      byGroup[r.group].codes.push({ code: r.cc_code, cc: r.source_cc || "" });
     }
     const satisfiedVia = [];
+    const satisfiedDetail = [];
     let covered = false;
     const options = [];
+    const optionsDetail = [];
     const optionGroups = [];
     for (const gi of Object.keys(byGroup).map(Number).sort((a, b) => a - b)) {
       const g = byGroup[gi];
-      const codes = [...new Set(g.codes.filter(Boolean))].sort();
+      /* 同一代码可能来自两所 CC 的报告：按 (代码, 来源 CC) 去重，判定只看
+       * 学生在"列出该代码的那所 CC"修过它。 */
+      const seenPair = new Set();
+      const pairs = [];
+      for (const p of g.codes) {
+        if (!p.code) continue;
+        const k = cp_normCode(p.code).replace(/ /g, "") + "|" + cp_normLabel(p.cc);
+        if (seenPair.has(k)) continue;
+        seenPair.add(k);
+        pairs.push(p);
+      }
+      const codes = [...new Set(pairs.map(p => p.code))].sort();
       if (!codes.length) continue;
       options.push(...codes);
+      for (const p of pairs) {
+        if (!optionsDetail.some(o => o.code === p.code && o.cc === p.cc))
+          optionsDetail.push({ code: p.code, cc: p.cc });
+      }
       /* And 组内是"都要修"，Or 组内是"任选其一"——显示必须区分，
        * 否则 "A / B" 会误导用户以为任选其一即可 */
       const conj = (g.conj || "And").toLowerCase();
       optionGroups.push(conj === "or" ? codes.join(" / ") : codes.join(" + "));
+      /* 每门代码的命中 = 学生在该代码的来源 CC 修过它 */
+      const hits = pairs.filter(p => cp_has(have, p.cc, p.code));
       if (conj === "or") {
-        const hit = codes.filter(c => cp_has(have, c));
-        if (hit.length) { covered = true; satisfiedVia.push(...hit); }
-      } else { // And：组内课程要全修
-        if (codes.every(c => cp_has(have, c))) {
-          covered = true; satisfiedVia.push(...codes);
+        if (hits.length) {
+          covered = true;
+          for (const h of hits) {
+            satisfiedVia.push(h.code);
+            satisfiedDetail.push({ code: h.code, cc: h.cc });
+          }
+        }
+      } else { // And：组内每门代码都要在来源 CC 修过
+        const hitCodes = new Set(hits.map(h => cp_normCode(h.code).replace(/ /g, "")));
+        if (codes.every(c => hitCodes.has(cp_normCode(c).replace(/ /g, "")))) {
+          covered = true;
+          for (const h of hits) {
+            satisfiedVia.push(h.code);
+            satisfiedDetail.push({ code: h.code, cc: h.cc });
+          }
         }
       }
     }
@@ -225,7 +325,11 @@ function cp_compareOne(report, have) {
       target_title: title,
       status: covered ? "covered" : "missing",
       via: [...new Set(satisfiedVia)].sort(),
+      via_detail: satisfiedDetail.filter((v, i, a) =>
+        a.findIndex(x => x.code === v.code && x.cc === v.cc) === i),
       options: [...new Set(options)].sort(),
+      options_detail: optionsDetail.sort((a, b) =>
+        (a.code < b.code ? -1 : a.code > b.code ? 1 : (a.cc < b.cc ? -1 : a.cc > b.cc ? 1 : 0))),
       options_display: optionGroups.join(t("d_opt_sep")),
       detail: covered ? t("d_covered")
         : t("d_missing", { options: optionGroups.join(t("d_opt_sep")) }),
@@ -250,9 +354,18 @@ function cp_compareOne(report, have) {
     }
   }
 
-  // 3) 白修预警：学生课程命中 denied 列表
-  const wasted = [...have].filter(c => deniedCodes[c]).sort()
-    .map(c => ({ cc_code: c, note: t("d_wasted", { title: deniedCodes[c] }) }));
+  // 3) 白修预警：学生课程命中 denied 列表（按来源 CC 各自算——
+  // 在 A 校被拒的课，在 B 校修的不算白修；同一代码两校都修过，只标被拒的那一所）
+  const wasted = [];
+  for (const e of have.perCc) {
+    for (const c of e.courses) {
+      const key = cp_normLabel(e.cc_name) + "|" + c.replace(/ /g, "");
+      if (deniedCodes[key])
+        wasted.push({ cc_code: c, cc_name: e.cc_name, note: t("d_wasted", { title: deniedCodes[key] }) });
+    }
+  }
+  wasted.sort((a, b) => (a.cc_code < b.cc_code ? -1 : a.cc_code > b.cc_code ? 1
+    : (a.cc_name < b.cc_name ? -1 : a.cc_name > b.cc_name ? 1 : 0)));
 
   const coveredN = items.filter(i => i.status === "covered").length;
   const missing = items.filter(i => i.status === "missing");
