@@ -83,8 +83,44 @@ function cmp_reassertColleges() {
     cmp_buildCourseIndex();
     cmp_renderCc2();
     const step2 = document.getElementById("step2");
-    if (step2 && !step2.hidden) cmp_renderTargets();
+    if (step2 && !step2.hidden) {
+      cmp_renderTargets(Array.isArray(CMP_SAVED.targets) ? CMP_SAVED.targets : null);
+    }
   }
+  cmp_reassertChips();
+}
+/* 校区芯片同理：刷新后 class=on 还在（点一下会把已选关掉），
+ * 但按钮原生外观把选中底色盖掉，看起来像没选。data-on 是真选择，
+ * class 只负责画出来，每次恢复都按 data-on 重画。 */
+function cmp_chipSelected(el) {
+  if (!el) return false;
+  if (el.dataset && (el.dataset.on === "1" || el.dataset.on === "0")) return el.dataset.on === "1";
+  if (el.getAttribute) {
+    const pressed = el.getAttribute("aria-pressed");
+    if (pressed === "true" || pressed === "false") return pressed === "true";
+  }
+  return !!(el.classList && el.classList.contains("on"));
+}
+function cmp_paintChip(el, on) {
+  if (!el) return;
+  on = !!on;
+  if (el.dataset) el.dataset.on = on ? "1" : "0";
+  if (el.setAttribute) el.setAttribute("aria-pressed", on ? "true" : "false");
+  if (!el.classList) return;
+  el.classList.remove("on");
+  if (on) el.classList.add("on");
+}
+function cmp_toggleChip(el) {
+  cmp_paintChip(el, !cmp_chipSelected(el));
+}
+function cmp_reassertChips() {
+  const box = document.getElementById("targets");
+  if (!box || !box.querySelectorAll) return;
+  box.querySelectorAll(".chip").forEach(el => cmp_paintChip(el, cmp_chipSelected(el)));
+}
+function cmp_chosenTargets() {
+  cmp_reassertChips();
+  return [...document.querySelectorAll("#targets .chip")].filter(cmp_chipSelected).map(ch => ch.dataset.v);
 }
 
 /* 我的规划：命名保存多套方案（localStorage，最多 20 套） */
@@ -101,7 +137,7 @@ function cmp_planData() {
     cc_name: cmp_ccName(),
     cc2_name: cmp_cc2Name(),
     major_query: document.getElementById("major").value.trim(),
-    targets: [...document.querySelectorAll("#targets .chip.on")].map(c => c.dataset.v),
+    targets: cmp_chosenTargets(),
     courses: document.getElementById("courses").value,
     courses2: document.getElementById("courses2").value || "",
     gpa: document.getElementById("gpa").value.trim(),
@@ -444,12 +480,8 @@ function cmp_showStep(n) {
   /* 学校下拉在 hidden 的步骤里被浏览器改回第一项时，重新露出来之前先对齐。 */
   if (n === 1) cmp_reassertColleges();
   if (n === 2) {
-    cmp_renderTargets();
-    if (Array.isArray(CMP_SAVED.targets)) {
-      document.querySelectorAll("#targets .chip").forEach(ch => {
-        ch.classList.toggle("on", CMP_SAVED.targets.includes(ch.dataset.v));
-      });
-    }
+    cmp_renderTargets(Array.isArray(CMP_SAVED.targets) ? CMP_SAVED.targets : null);
+    cmp_reassertChips();
     cmp_countCourses();
   }
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -677,16 +709,19 @@ function cmp_placeholder() {
     + `<div class="ph-tip">${cmp_escape(t("ph_cmp_tip"))}</div></div>`;
 }
 
-function cmp_renderTargets() {
+function cmp_renderTargets(selected) {
   const cc = cmp_ccName();
   const cc2 = cmp_cc2Name();
   const box = document.getElementById("targets");
-  /* 目标校取两所 CC 的并集：只在第二所报告里有的目标也能比 */
+  /* 目标校取两所 CC 的并集：只在第二所报告里有的目标也能比。
+   * selected 为数组时按它恢复（刷新）；不传则全部选中。 */
   const tgts = Object.keys((CMP_OPTS.by_cc[cc]) || {});
   if (cc2) for (const x of Object.keys((CMP_OPTS.by_cc[cc2]) || {})) if (!tgts.includes(x)) tgts.push(x);
-  box.innerHTML = tgts.map(t =>
-    `<button type="button" class="chip on" data-v="${cmp_escape(t)}" onclick="this.classList.toggle('on')">${cmp_escape(t)}</button>`
-  ).join("") || `<span class="hint">${cmp_escape(t("no_report_for_cc"))}</span>`;
+  box.innerHTML = tgts.map(name => {
+    const on = !selected || selected.includes(name);
+    const v = cmp_escape(name);
+    return `<button type="button" class="chip${on ? " on" : ""}" data-v="${v}" data-on="${on ? "1" : "0"}" aria-pressed="${on ? "true" : "false"}" onclick="cmp_toggleChip(this)">${v}</button>`;
+  }).join("") || `<span class="hint">${cmp_escape(t("no_report_for_cc"))}</span>`;
 }
 
 function cmp_run() {
@@ -695,7 +730,7 @@ function cmp_run() {
   const ccName = cmp_ccName();
   const cc2Name = cmp_cc2Name();
   const majorQuery = document.getElementById("major").value.trim() || "computer science";
-  const targets = [...document.querySelectorAll("#targets .chip.on")].map(c => c.dataset.v);
+  const targets = cmp_chosenTargets();
   const courses = document.getElementById("courses").value
     .split(/[\n,，;；]+/).map(s => s.trim()).filter(Boolean);
   const courses2 = document.getElementById("courses2").value
@@ -1220,7 +1255,7 @@ function cmp_whatifToggle(el) {
   const ccName = cmp_ccName();
   const cc2Name = cmp_cc2Name();
   const majorQuery = document.getElementById("major").value.trim() || "computer science";
-  const targets = [...document.querySelectorAll("#targets .chip.on")].map(c => c.dataset.v);
+  const targets = cmp_chosenTargets();
   const keep = (x) => !_cmpExcluded.has(x.cc + "|" + x.code.replace(/ /g, ""));
   const courses = _cmpFullCourses.filter(keep).filter(x => x.cc === ccName).map(x => x.code);
   const courses2 = _cmpFullCourses.filter(keep).filter(x => x.cc === cc2Name).map(x => x.code);

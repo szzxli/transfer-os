@@ -106,5 +106,44 @@ check(ctx.tour_isDone() === true, "marking the tour done is visible to the next 
 check(ctx.tour_shouldAutoShow(ctx.tour_isDone(), "") === false,
   "once marked done, a reload would not schedule the tour");
 
+/* 刷新后 data-on 仍是选中，但 class 丢了：看起来没选，点一下反而关掉。
+ * 重画必须把 class 补回来，并且切换时两者一起变。 */
+function makeChip(opts) {
+  const classes = new Set(opts.classOn ? ["chip", "on"] : ["chip"]);
+  const el = {
+    dataset: { v: opts.v || "UCLA" },
+    attrs: {},
+    classList: {
+      contains(c) { return classes.has(c); },
+      add(c) { classes.add(c); },
+      remove(c) { classes.delete(c); },
+    },
+    setAttribute(k, v) { el.attrs[k] = String(v); },
+    getAttribute(k) { return Object.prototype.hasOwnProperty.call(el.attrs, k) ? el.attrs[k] : null; },
+  };
+  if (opts.datasetOn != null) el.dataset.on = opts.datasetOn;
+  if (opts.pressed != null) el.attrs["aria-pressed"] = opts.pressed;
+  return el;
+}
+const stale = makeChip({ datasetOn: "1", classOn: false, pressed: "true" });
+check(ctx.cmp_chipSelected(stale) === true, "a chip stays selected after its on class is lost");
+ctx.cmp_paintChip(stale, ctx.cmp_chipSelected(stale));
+check(stale.classList.contains("on"), "repaint puts the on class back so it looks selected");
+check(stale.getAttribute("aria-pressed") === "true" && stale.dataset.on === "1",
+  "aria and data-on stay selected with the class");
+ctx.cmp_toggleChip(stale);
+check(stale.dataset.on === "0" && !stale.classList.contains("on"),
+  "one click turns a selected chip off in both state and class");
+ctx.cmp_toggleChip(stale);
+check(stale.dataset.on === "1" && stale.classList.contains("on") && stale.getAttribute("aria-pressed") === "true",
+  "the next click selects it again in state and class");
+const six = ["UC Davis", "UC Irvine", "UCLA", "UC Berkeley", "UC San Diego", "UC Santa Cruz"];
+const restored = six.map(name => {
+  const chip = makeChip({ v: name, datasetOn: "1", classOn: false, pressed: "true" });
+  ctx.cmp_paintChip(chip, ctx.cmp_chipSelected(chip));
+  return chip.classList.contains("on");
+});
+check(restored.every(Boolean), "all six restored campuses paint as selected");
+
 console.log(pass + "/" + (pass + fail));
 if (fail) process.exit(1);

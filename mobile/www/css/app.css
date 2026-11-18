@@ -142,6 +142,7 @@ textarea { min-height: 76px; resize: vertical; }
 /* ---------- 芯片多选 ---------- */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .chip {
+  appearance: none; -webkit-appearance: none;
   border: 1px solid #16453a; background: #fff; color: #16453a; border-radius: 16px;
   padding: 8px 14px; font-size: 14px; font-family: inherit; cursor: pointer; user-select: none;
   transition: all .22s var(--spring);
@@ -153,7 +154,8 @@ textarea { min-height: 76px; resize: vertical; }
 }
 .chip.on {
   border-color: transparent; color: #fff; font-weight: 700;
-  background: var(--brand-grad);
+  background-color: #16453a;
+  background-image: var(--brand-grad);
   box-shadow: 0 4px 12px rgba(19, 38, 37, .28);
   animation: pop .3s var(--spring);
 }
